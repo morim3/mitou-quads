@@ -121,7 +121,8 @@ def sampling_grover_oracle(
             p = np.abs(state_vector) ** 2
             p = p / np.sum(p)
             acception_rate, _ = calc_acception_rate(p, func, n_digits, dim, threshold)
-            optimal_amplify_num = calc_optimal_amplify_num(acception_rate=acception_rate)
+            actual_amplify_num = calc_optimal_amplify_num(acception_rate=acception_rate)
+            
         else:
             actual_amplify_num = random.randint(0, int(amplify_num)+1) if amplify_num >= 1 else 0 
         

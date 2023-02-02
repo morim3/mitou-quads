@@ -31,7 +31,6 @@ class CMAHyperParam:
     # パラメータ名はtutrialに準拠
     n_dim: int
     n_samples: int
-    smoothing_th: float
     c_sigma: float = None
     d_sigma: float = None
     c_c: float = None
@@ -76,7 +75,6 @@ class QuadsHyperParam:
 
 
 def update_quads_params(accepted, accepted_val, gen, param: QuadsParam, hp: QuadsHyperParam):
-    print(hp)
     threshold: float = hp.smoothing_th * param.threshold + \
         (1 - hp.smoothing_th) * np.quantile(accepted_val, q=hp.quantile)
 
@@ -84,12 +82,14 @@ def update_quads_params(accepted, accepted_val, gen, param: QuadsParam, hp: Quad
     return QuadsParam(threshold, new_cma_param)
 
 # ref: https://horomary.hatenablog.com/entry/2021/01/23/013508
-def update_cma_params(accepted, accepted_val, gen, param: CMAParam, hp: CMAHyperParam):
+def update_cma_params(accepted, accepted_val, gen, param: CMAParam, hp: CMAHyperParam, n_elite=None):
     # accepted: (n_samples, n_dim)
     # accepted_val: (n_samples,)
 
+    n_elite = accepted.shape[0] if n_elite is None else n_elite
+
     sort_indices = np.argsort(accepted_val)
-    accepted = accepted[sort_indices]
+    accepted = accepted[sort_indices][:n_elite]
 
     diff_scaled = (accepted - param.mean) / param.step_size
 
@@ -135,3 +135,13 @@ def update_cma_params(accepted, accepted_val, gen, param: CMAParam, hp: CMAHyper
     return CMAParam(
         mean, new_C, step_size, param.cov_path, step_path)
 
+def get_normal_samples(cma_param: CMAParam, n_dim, n_samples):
+    Z = np.random.normal(0, 1, size=(n_samples, n_dim))
+
+    diagDD, B = np.linalg.eigh(cma_param.cov)
+    diagD = np.sqrt(diagDD)
+    BD = np.matmul(B, np.diag(diagD))
+
+    Y = np.matmul(BD, Z.T).T
+    X = cma_param.mean + cma_param.step_size * Y
+    return X                 

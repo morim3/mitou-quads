@@ -5,29 +5,53 @@ from numpy.typing import NDArray
 
 from sampler import sampling_grover_oracle
 
+def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
+    n_eval = 0
+
+    while True:
+        sample = np.random.uniform(0.0, 1.0, dim)
+
+        func_val = func(sample)
+        n_eval += 1
+
+        if func_val < threshold:
+            threshold = func_val
+            break
+
+        if n_eval > oracle_eval_limit:
+            raise TimeoutError
+
+    return sample, func_val, n_eval
+    
+
 
 def grover_minimization(
     func: Callable[[NDArray], NDArray],
-    init_threshold: float,
-    iter_num: int,
-    target: NDArray,
-    n_digits=8,
-    dim=2,
-    terminate_eps=0.001,
-    optimal_amplify_num=False,
+    config,
     verbose=False
 ):
 
-    threshold: float = init_threshold
+    threshold: float = config["init_threshold"]
     eval_num_hist = []
     threshold_hist = []
 
-    for i in range(iter_num):
+    dim = config["dim"]
+    target = config["target"]
 
+    for i in range(config["iter_num"]):
 
         try:
-            x, y, eval_num = sampling_grover_oracle(
-                func, None, None, n_digits, dim, threshold, uniform=True, amplify_max=128, optimal_amplify_num=optimal_amplify_num)
+
+            if config["sampler_type"] == "quantum":
+                x, y, eval_num = sampling_grover_oracle(
+                    func, None, None, config["n_digits"], dim, threshold, uniform=True, optimal_amplify_num=config["optimal_amplify_num"], 
+                    oracle_eval_limit=config["eval_limit_one_sample"]
+                )
+            elif config["sampler_type"] == "classical":
+                x, y, eval_num = uniform_sampling_classical(func, dim, threshold, config["eval_limit_one_sample"])
+            else:
+                raise NotImplemented
+
         except TimeoutError:
             break
 
@@ -45,7 +69,7 @@ def grover_minimization(
             print("eval_num: ", eval_num_hist[-1])
             print("--------")
 
-        if dist_target < terminate_eps:
+        if dist_target < config["terminate_eps"]:
             break
 
     if verbose:
@@ -59,13 +83,15 @@ if __name__ == "__main__":
 
     target = [0.2, 0.8]
     config = {
+        "sampler_type": "quantum",
         "target": target,
         "dim": 2,
         "init_threshold": 1.,
         "n_digits": 8,
-        "iter_num": 30,
-        "terminate_eps": 0.001,
-        "verbose": True
+        "iter_num": 100,
+        "terminate_eps": 0.01,
+        "eval_limit_one_sample": 10000,
+        "optimal_amplify_num": True,
     }
 
 
@@ -73,4 +99,4 @@ if __name__ == "__main__":
         2*np.pi*(10*(x[..., 0]-target[0]))) - 10 * np.cos(2*np.pi*(10*(x[..., 1]-target[1])))) / 40
 
     result_param, (param_hist, eval_num_hist) = grover_minimization(
-        func, **config)
+        func, config, verbose=True)

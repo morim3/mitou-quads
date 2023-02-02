@@ -5,10 +5,10 @@ import numpy as np
 from numpy.typing import NDArray
 
 from sampler import initalize_normal_state, sampling_grover_oracle
-from models.parameters import CMAHyperParam, CMAParam, QuadsParam, QuadsHyperParam, update_quads_params
+from models.parameters import CMAHyperParam, CMAParam, QuadsParam, QuadsHyperParam, update_quads_params, get_normal_samples
 
 
-def get_samples(func, quads_param:QuadsParam, config):
+def get_samples_grover(func, quads_param:QuadsParam, config):
     accepted = []
     accepted_val = []
     mean = quads_param.cma_param.mean
@@ -20,7 +20,7 @@ def get_samples(func, quads_param:QuadsParam, config):
         initial_state = initalize_normal_state(
             config["n_digits"], mean, cov, config["n_dim"])
         x, y, eval_num = sampling_grover_oracle(
-            func, mean, cov, config["n_digits"], config["n_dim"], threshold, optimal_amplify_num=config["optimal_amplify_num"], initial_state=initial_state)
+            func, mean, cov, config["n_digits"], config["n_dim"], threshold, optimal_amplify_num=config["optimal_amplify_num"], initial_state=initial_state, oracle_eval_limit=config["eval_limit_one_sample"])
 
         n_eval += eval_num
 
@@ -28,6 +28,31 @@ def get_samples(func, quads_param:QuadsParam, config):
         accepted_val.append(y)
 
     return np.array(accepted), np.concatenate(accepted_val), n_eval
+
+
+def get_samples_classical(func, quads_param:QuadsParam, config):
+    n_sampled = 0
+    n_eval = 0
+    accepted = []
+    accepted_val = []
+    while n_sampled < config["n_samples"]:
+        sample = get_normal_samples(quads_param.cma_param, config["n_dim"], 1)
+
+        if not np.all(np.logical_and(sample<1, sample>0)):
+            continue
+
+        func_val = func(sample)
+        n_eval += 1
+
+        if n_eval > config["eval_limit_one_sample"]:
+            raise TimeoutError
+
+        if func_val < quads_param.threshold:
+            n_sampled += 1
+            accepted.append(sample)
+            accepted_val.append(func_val)
+
+    return np.array(accepted[0]), np.array(accepted_val[0]), n_eval
 
 
 def run_quads(
@@ -38,11 +63,11 @@ def run_quads(
 ):
 
     hp = QuadsHyperParam(quantile=config["quantile"], smoothing_th=config["smoothing_th"], 
-                         cma_hyperparam=CMAHyperParam(config["n_dim"], config["n_samples"], config["smoothing_th"]))
+                         cma_hyperparam=CMAHyperParam(config["n_dim"], config["n_samples"], ))
 
     quads_param = init_param
     eval_num_hist = []
-    param_hist = []
+    param_hist = [init_param]
     min_func_hist = []
     dist_target_hist = []
 
@@ -51,8 +76,15 @@ def run_quads(
     for i in range(config["iter_num"]):
         # グローバー探索によりしきい値未満のサンプルを得る
         try:
-            accepted, accepted_val, n_eval = get_samples(
-                func, quads_param, config)
+            if config["sampler_type"] == "quantum":
+                accepted, accepted_val, n_eval = get_samples_grover(
+                    func, quads_param, config)
+            elif config["sampler_type"] == "classical":
+                accepted, accepted_val, n_eval = get_samples_classical(
+                    func, quads_param, config)
+            else:
+                raise NotImplementedError
+
         except TimeoutError:
             break
 
@@ -97,6 +129,7 @@ if __name__ == "__main__":
     target = np.array([0.8, 0.2])
 
     config = {
+        "sampler_type": "classical",
         "n_dim": 2,
         "n_digits": 8,
         "iter_num": 30,
@@ -106,7 +139,8 @@ if __name__ == "__main__":
         "optimal_amplify_num": False,
         "quantile": 0.1,
         "smoothing_th": 0.5,
-        "target": target
+        "target": target,
+        "eval_limit_one_sample": 10000
     }
 
     def func(x):
