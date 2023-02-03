@@ -4,7 +4,7 @@ from typing import Callable, List, Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from sampler import initalize_normal_state, sampling_grover_oracle
+from models.amp_sim.sampler import initalize_normal_state, sampling_grover_oracle
 from models.parameters import CMAHyperParam, CMAParam, QuadsParam, QuadsHyperParam, update_quads_params, get_normal_samples
 
 
@@ -74,7 +74,7 @@ def run_quads(
     min_val = np.inf
 
     for i in range(config["iter_num"]):
-        # グローバー探索によりしきい値未満のサンプルを得る
+        # しきい値未満のサンプルを得る
         try:
             if config["sampler_type"] == "quantum":
                 accepted, accepted_val, n_eval = get_samples_grover(

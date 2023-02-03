@@ -1,6 +1,8 @@
 from typing import Callable, Optional
-import scipy.stats
 import numpy as np
+import jax.numpy as jnp
+import jax
+from jax import jit
 from numpy import random
 from numpy.typing import NDArray
 
@@ -12,16 +14,16 @@ def get_grid_point(n_bits, range_min, range_max, dim):
 
 def discrete_normal(n_bits, mean, cov, dim, range_min=0, range_max=1):
     grid = get_grid_point(n_bits, range_min, range_max, dim)
-    pdf = scipy.stats.multivariate_normal.pdf(grid, mean=mean, cov=cov).astype(np.float64)
+    pdf = jax.scipy.stats.multivariate_normal.pdf(grid, mean=mean, cov=cov)
     return pdf / np.sum(pdf)
 
 def initalize_normal_state(n_digits:int, mu: NDArray, cov: NDArray,  dim:int):
     distribution = discrete_normal(n_digits, mu, cov, dim, range_min=0, range_max=1)
-    return np.sqrt(distribution)
+    return jnp.sqrt(distribution)
 
 def init_uniform_state(n_digits:int, dim:int):
-    distribution = np.ones(2**(n_digits*dim)) / 2 ** (n_digits * dim)
-    return np.sqrt(distribution)
+    distribution = jnp.ones(2**(n_digits*dim)) / 2 ** (n_digits * dim)
+    return jnp.sqrt(distribution)
 
 class ReflectionGate:
     def __init__(self, reflection_base):
@@ -48,10 +50,9 @@ class DiagonalOracle:
 
 class ControlZ:
     def __init__(self, N: int):
-        self.v = np.ones(N)
+        self.v = jnp.ones(N)
         self.v[0] = -1
 
-    # O(1)
     def forward(self, state_vector: np.ndarray):
         return state_vector * self.v
     
@@ -59,7 +60,7 @@ class ControlZ:
         return self.forward(state_vector)
 
 def regularize(state_vector: np.ndarray):
-    return state_vector / np.linalg.norm(state_vector)
+    return state_vector / jnp.linalg.norm(state_vector)
 
 def calc_acception_rate(p, func, n_digits, dim, threshold):
     test_point = get_grid_point(n_digits, 0, 1, dim)
@@ -102,7 +103,7 @@ def sampling_grover_oracle(
     
     oracle = DiagonalOracle(n_digits, lambda x: np.where(func(x) < threshold, -1, 1), dim)
     
-    amplify = [oracle.forward, ReflectionGate(initial_state).forward, regularize]
+    amplify = [jit(oracle.forward), jit(ReflectionGate(initial_state).forward), jit(regularize)]
 
     iter_num = 0
     amplify_num = 0
@@ -111,8 +112,10 @@ def sampling_grover_oracle(
     x = None
     y = None
 
+    state_vector = jnp.array(initial_state)
+    now_amplify = 0
+
     while y is None or y >= threshold:
-        state_vector = initial_state
 
         if verbose:
             print(int(amplify_num))
@@ -129,7 +132,8 @@ def sampling_grover_oracle(
         if verbose:
             print("amp_num", amplify_num, "actual", actual_amplify_num)
 
-        circuit = [] + amplify * actual_amplify_num
+        circuit = [] + amplify * (actual_amplify_num - now_amplify)
+        now_amplify = actual_amplify_num
 
         for i, gate in enumerate(circuit):
             state_vector = gate(state_vector)
@@ -138,8 +142,8 @@ def sampling_grover_oracle(
 
         p = np.abs(state_vector) ** 2
         p = p / np.sum(p)
-        acception_rate, accept_num = calc_acception_rate(p, func, n_digits, dim, threshold)
         if verbose: 
+            acception_rate, accept_num = calc_acception_rate(p, func, n_digits, dim, threshold)
             print("acception_rate", acception_rate, accept_num)
 
         x = format(np.random.choice(np.arange(N), p=p), "0" + str(dim * n_digits) + "b")

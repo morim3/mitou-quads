@@ -3,7 +3,7 @@ from typing import Callable, List
 import numpy as np
 from numpy.typing import NDArray
 
-from sampler import sampling_grover_oracle
+from models.amp_sim.sampler import sampling_grover_oracle
 
 def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
     n_eval = 0
@@ -25,7 +25,7 @@ def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
     
 
 
-def grover_minimization(
+def run_grover_minimization(
     func: Callable[[NDArray], NDArray],
     config,
     verbose=False
@@ -35,7 +35,7 @@ def grover_minimization(
     eval_num_hist = []
     threshold_hist = []
 
-    dim = config["dim"]
+    dim = config["n_dim"]
     target = config["target"]
 
     for i in range(config["iter_num"]):
@@ -98,5 +98,5 @@ if __name__ == "__main__":
     def func(x): return (20 + (10*(x[..., 0]-target[0])) ** 2 + (10*(x[..., 1]-target[1])) ** 2 - 10 * np.cos(
         2*np.pi*(10*(x[..., 0]-target[0]))) - 10 * np.cos(2*np.pi*(10*(x[..., 1]-target[1])))) / 40
 
-    result_param, (param_hist, eval_num_hist) = grover_minimization(
+    result_param, (param_hist, eval_num_hist) = run_grover_minimization(
         func, config, verbose=True)
