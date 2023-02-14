@@ -2,7 +2,7 @@ import numpy as np
 from models.parameters import CMAParam, CMAHyperParam, update_cma_params, get_normal_samples
 
 
-def run_cmaes(func, init_cma_param: CMAParam, config, verbose=True):
+def run_cmaes(func, init_cma_param: CMAParam, config, verbose=False):
 
     cma_param = init_cma_param
 
@@ -48,7 +48,7 @@ def run_cmaes(func, init_cma_param: CMAParam, config, verbose=True):
             break
 
     print("total_eval_num: ", sum(eval_num_hist))
-    return cma_param, (param_hist, np.array(eval_num_hist), np.array(min_func_hist))
+    return cma_param, (np.array(min_func_hist), np.array(eval_num_hist), np.array(dist_target_hist), param_hist)
 
 if __name__ == "__main__":
     init_threshold = 1.

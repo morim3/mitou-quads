@@ -27,7 +27,7 @@ def get_samples_grover(func, quads_param:QuadsParam, config):
         accepted.append(x)
         accepted_val.append(y)
 
-    return np.array(accepted), np.concatenate(accepted_val), n_eval
+    return np.array(accepted), np.array(accepted_val).squeeze(), n_eval
 
 
 def get_samples_classical(func, quads_param:QuadsParam, config):
@@ -117,7 +117,7 @@ def run_quads(
             break
 
     print("total_eval_num: ", sum(eval_num_hist))
-    return quads_param, (param_hist, np.array(eval_num_hist), np.array(min_func_hist))
+    return quads_param, (np.array(min_func_hist),np.array(eval_num_hist), np.array(dist_target_hist), param_hist )
 
 
 if __name__ == "__main__":

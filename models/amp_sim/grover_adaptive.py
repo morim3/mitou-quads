@@ -34,6 +34,7 @@ def run_grover_minimization(
     threshold: float = config["init_threshold"]
     eval_num_hist = []
     threshold_hist = []
+    dist_target_hist = []
 
     dim = config["n_dim"]
     target = config["target"]
@@ -59,6 +60,7 @@ def run_grover_minimization(
         threshold = y
         threshold_hist.append(threshold)
         dist_target = np.linalg.norm(x-target)
+        dist_target_hist.append(dist_target)
 
         if verbose:
             print("-------")
@@ -74,7 +76,7 @@ def run_grover_minimization(
 
     if verbose:
         print("total_eval_num: ", sum(eval_num_hist))
-    return x, (threshold_hist, eval_num_hist)
+    return x, (np.array(threshold_hist), np.array(eval_num_hist), np.array(dist_target_hist))
 
 
 if __name__ == "__main__":
