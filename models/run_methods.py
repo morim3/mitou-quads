@@ -146,6 +146,7 @@ def log_function_shape(func_name, other_param):
     ax.set_title(f"{func_name} function")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
+    ax.scatter([target[0]], [target[1]], marker='*', s=1)
 
     wandb.log({"func": fig})
 
