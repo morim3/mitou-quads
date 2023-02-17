@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 
 
 def get_grid_point(n_bits, range_min, range_max, dim):
-    x = [np.linspace(range_min, range_max, 2 ** n_bits, endpoint=False) for _ in range(dim)]
+    x = [np.linspace(range_min, range_max, 2 ** n_bits, endpoint=False, dtype=np.float32) for _ in range(dim)]
     grid = np.stack(np.meshgrid(*x, indexing="ij"), axis=-1).reshape(-1, dim)
     return grid
 
@@ -22,7 +22,7 @@ def initalize_normal_state(n_digits:int, mu: NDArray, cov: NDArray,  dim:int):
     return jnp.sqrt(distribution)
 
 def init_uniform_state(n_digits:int, dim:int):
-    distribution = jnp.ones(2**(n_digits*dim)) / 2 ** (n_digits * dim)
+    distribution = jnp.ones(2**(n_digits*dim), dtype=np.float32) / 2 ** (n_digits * dim)
     return jnp.sqrt(distribution)
 
 class ReflectionGate:
