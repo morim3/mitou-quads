@@ -131,12 +131,33 @@ def run_cmaes(func, config):
 
     return eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global
 
+def log_func(func_name, other_param):
+    import matplotlib.pyplot as plt
+    if "target" in other_param:
+        func, target = objective_functions.__getattribute__(f"get_{func_name}")(dim=2, target=target)
+    else:
+        func, target = objective_functions.__getattribute__(f"get_{func_name}")(dim=2, )
+
+    X, Y = np.meshgrid(np.linspace(0, 1, 100), np.linspace(0, 1, 100))
+    grid = np.stack([X, Y], axis=-1).reshape((-1, 2))
+    func_value = func(grid).reshape((100, 100))
+    fig, ax = plt.subplots()
+    ax.contour(X, Y, func_value)
+    fig.set_title("two dimensional function")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+
+    wandb.log({"func": fig})
+
+
 
 def main(args):
 
 
     other_param = json.loads(args.other_param)
     func, target = objective_functions.__getattribute__(f"get_{args.func}")(**other_param)
+
+    log_func(args.func, args.other_param)
 
     n_dim = target.shape[-1]
     
