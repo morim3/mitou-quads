@@ -131,7 +131,7 @@ def run_cmaes(func, config):
 
     return eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global
 
-def log_func(func_name, other_param):
+def log_function_shape(func_name, other_param):
     import matplotlib.pyplot as plt
     if "target" in other_param:
         func, target = objective_functions.__getattribute__(f"get_{func_name}")(dim=2, target=target)
@@ -204,7 +204,7 @@ def main(args):
         notes = args.notes
     )
 
-    log_func(args.func, args.other_param)
+    log_function_shape(args.func, args.other_param)
 
     if args.method == "cmaes":
         run_cmaes(func, config)
