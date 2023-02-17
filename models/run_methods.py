@@ -143,7 +143,7 @@ def log_func(func_name, other_param):
     func_value = func(grid).reshape((100, 100))
     fig, ax = plt.subplots()
     ax.contour(X, Y, func_value)
-    fig.set_title("two dimensional function")
+    ax.set_title("two dimensional function")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
 
