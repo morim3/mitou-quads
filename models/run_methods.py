@@ -138,12 +138,12 @@ def log_function_shape(func_name, other_param):
     else:
         func, target = objective_functions.__getattribute__(f"get_{func_name}")(dim=2, )
 
-    X, Y = np.meshgrid(np.linspace(0, 1, 100), np.linspace(0, 1, 100))
+    X, Y = np.meshgrid(np.linspace(0, 1, 500), np.linspace(0, 1, 500))
     grid = np.stack([X, Y], axis=-1).reshape((-1, 2))
-    func_value = func(grid).reshape((100, 100))
-    fig, ax = plt.subplots()
+    func_value = func(grid).reshape((500, 500))
+    fig, ax = plt.subplots(dpi=500)
     ax.imshow(func_value)
-    ax.set_title("two dimensional function")
+    ax.set_title(f"{func_name} function")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
 
