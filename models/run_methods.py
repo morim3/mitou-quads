@@ -142,14 +142,12 @@ def log_function_shape(func_name, other_param):
     grid = np.stack([X, Y], axis=-1).reshape((-1, 2))
     func_value = func(grid).reshape((100, 100))
     fig, ax = plt.subplots()
-    ax.contour(X, Y, func_value)
+    ax.imsohw(func_value)
     ax.set_title("two dimensional function")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
 
     wandb.log({"func": fig})
-
-
 
 def main(args):
 
@@ -225,7 +223,7 @@ def main(args):
 if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument("--name", default="default")
+    parser.add_argument("--name", default="")
     parser.add_argument("--notes", default="")
     parser.add_argument("--func", default="rastrigin")
     parser.add_argument("--other_param", default="{}")
