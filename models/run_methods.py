@@ -94,7 +94,7 @@ def run_grover(func, config, ):
     converged_to_global = []
 
     for trial in tqdm(range(config["trial_num"])):
-        _, (min_func_hist, eval_num_hist, dist_target_hist, _) = grover_adaptive.run_grover_minimization(func, config, False)
+        _, (min_func_hist, eval_num_hist, dist_target_hist) = grover_adaptive.run_grover_minimization(func, config, False)
 
         eval_num_hist = np.cumsum(eval_num_hist)
         min_func_hists.append(np.array(min_func_hist))
