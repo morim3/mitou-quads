@@ -142,7 +142,7 @@ def log_function_shape(func_name, other_param):
     grid = np.stack([X, Y], axis=-1).reshape((-1, 2))
     func_value = func(grid).reshape((100, 100))
     fig, ax = plt.subplots()
-    ax.imsohw(func_value)
+    ax.imshow(func_value)
     ax.set_title("two dimensional function")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
