@@ -161,7 +161,7 @@ def main(args):
     
 
     init_normal_mean = np.array(args.init_normal_mean)
-    init_threshold = func(args.init_normal_mean)
+    init_threshold = func(init_normal_mean)
     init_cov = np.identity(n_dim) * args.init_normal_std
 
     if n_dim != init_normal_mean.shape[-1]:
