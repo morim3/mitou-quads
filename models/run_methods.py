@@ -199,6 +199,7 @@ def main(args):
  
     wandb.init(
         project="mitou-quads",
+        entity="morim3",
         config=config,
         name=args.name,
         notes = args.notes
