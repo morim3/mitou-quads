@@ -157,7 +157,6 @@ def main(args):
     other_param = json.loads(args.other_param)
     func, target = objective_functions.__getattribute__(f"get_{args.func}")(**other_param)
 
-    log_func(args.func, args.other_param)
 
     n_dim = target.shape[-1]
     
@@ -205,6 +204,7 @@ def main(args):
         notes = args.notes
     )
 
+    log_func(args.func, args.other_param)
 
     if args.method == "cmaes":
         run_cmaes(func, config)
