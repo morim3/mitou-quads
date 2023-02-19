@@ -5,6 +5,9 @@ from numpy.typing import NDArray
 
 from models.amp_sim.sampler import sampling_grover_oracle
 
+def optimal_amplify_num(p):
+    return np.arccos(p) / 2 / np.arcsin(p)
+
 def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
     n_eval = 0
 
@@ -21,8 +24,10 @@ def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
         if n_eval > oracle_eval_limit:
             raise TimeoutError
 
-    return sample, func_val, n_eval
-    
+    p = 1 / n_eval
+    n_eval_estimated = optimal_amplify_num(p) + 1
+
+    return sample, func_val, n_eval_estimated
 
 
 def run_grover_minimization(

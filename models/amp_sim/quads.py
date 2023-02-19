@@ -30,6 +30,9 @@ def get_samples_grover(func, quads_param:QuadsParam, config):
     return np.array(accepted), np.array(accepted_val).squeeze(), n_eval
 
 
+def optimal_amplify_num(p):
+    return np.arccos(p) / 2 / np.arcsin(p)
+
 def get_samples_classical(func, quads_param:QuadsParam, config):
     n_sampled = 0
     n_eval = 0
@@ -52,7 +55,11 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
             accepted.append(sample)
             accepted_val.append(func_val)
 
-    return np.array(accepted[0]), np.array(accepted_val[0]), n_eval
+    p = n_sampled / n_eval
+    n_eval_estimated = (optimal_amplify_num(p) + 1) * config["n_samples"]
+
+
+    return np.array(accepted[0]), np.array(accepted_val[0]), n_eval_estimated
 
 
 def run_quads(
