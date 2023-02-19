@@ -59,5 +59,14 @@ def get_schwefel(dim=3, target=None):
 
     return fun, target
 
+def get_griewank(dim=3, target=None):
+    if target is None:
+        target = np.ones(dim, dtype=np.float32) * 0.5
+    def fun(x):
+        x = (x-target[None]) * 1024
+        return 1 + np.sum(x**2, axis=-1) / 4000 - np.prod(np.cos(x / np.sqrt(np.arange(x.shape[-1])+1,)[None]), axis=-1)
+
+    return fun, target
+
 def rosenbrock(x):
     return np.sum((x[:, 1:] - x[:, :-1] ** 2) ** 2 * 100 + (1 - x[:, :-1])**2)
