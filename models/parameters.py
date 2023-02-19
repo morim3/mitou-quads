@@ -136,12 +136,19 @@ def update_cma_params(accepted, accepted_val, gen, param: CMAParam, hp: CMAHyper
         mean, new_C, step_size, param.cov_path, step_path)
 
 def get_normal_samples(cma_param: CMAParam, n_dim, n_samples):
-    Z = np.random.normal(0, 1, size=(n_samples, n_dim))
+    n_sampled = 0
+    sampled = []
+    while n_sampled < n_samples:
+        Z = np.random.normal(0, 1, size=(n_dim, ))
 
-    diagDD, B = np.linalg.eigh(cma_param.cov)
-    diagD = np.sqrt(diagDD)
-    BD = np.matmul(B, np.diag(diagD))
+        diagDD, B = np.linalg.eigh(cma_param.cov)
+        diagD = np.sqrt(diagDD)
+        BD = np.matmul(B, np.diag(diagD))
 
-    Y = np.matmul(BD, Z.T).T
-    X = cma_param.mean + cma_param.step_size * Y
-    return X                 
+        Y = np.matmul(BD, Z.T).T
+        X = cma_param.mean + cma_param.step_size * Y
+        if np.all(np.logical_and(0. <= X, X <= 1. )):
+            sampled.append(X)
+            n_sampled += 1
+            
+    return np.stack(sampled)

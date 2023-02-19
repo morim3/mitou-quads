@@ -131,12 +131,9 @@ def run_cmaes(func, config):
 
     return eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global
 
-def log_function_shape(func_name, other_param):
+def log_function_shape(func_name, ):
     import matplotlib.pyplot as plt
-    if "target" in other_param:
-        func, target = objective_functions.__getattribute__(f"get_{func_name}")(dim=2, target=target)
-    else:
-        func, target = objective_functions.__getattribute__(f"get_{func_name}")(dim=2, )
+    func, target = objective_functions.__getattribute__(f"get_{func_name}")(dim=2, )
 
     X, Y = np.meshgrid(np.linspace(0, 1, 500), np.linspace(0, 1, 500))
     grid = np.stack([X, Y], axis=-1).reshape((-1, 2))
@@ -153,14 +150,17 @@ def log_function_shape(func_name, other_param):
 def main(args):
 
 
-    other_param = json.loads(args.other_param)
-    func, target = objective_functions.__getattribute__(f"get_{args.func}")(**other_param)
+    func, target = objective_functions.__getattribute__(f"get_{args.func}")(dim=args.n_dim)
 
 
     n_dim = target.shape[-1]
     
 
-    init_normal_mean = np.array(args.init_normal_mean)
+    if len(args.init_normal_mean) == 1:
+        init_normal_mean = np.array(args.init_normal_mean * n_dim)
+    else:
+        init_normal_mean = np.array(args.init_normal_mean)
+
     init_threshold = func(init_normal_mean)
     init_cov = np.identity(n_dim) * args.init_normal_std
 
@@ -176,6 +176,7 @@ def main(args):
         n_samples = None
 
     config = {
+        "func": args.func,
         "sampler_type": args.sampler_type,
         "method": args.method,
         "n_dim": n_dim,
@@ -196,15 +197,25 @@ def main(args):
         "init_step_size": args.init_step_size,
     }
  
-    wandb.init(
-        project="mitou-quads",
-        entity="morim3",
-        config=config,
-        name=args.name,
-        notes = args.notes
-    )
+    if config["sampler_type"] == "quantum":
+        wandb.init(
+            project="mitou-quads",
+            entity="morim3",
+            config=config,
+            name=args.name,
+            notes = args.notes
+        )
+    elif config["sampler_type"] == "classical":
+        wandb.init(
+            project="mitou-quads-classical",
+            entity="morim3",
+            config=config,
+            name=args.name,
+            notes=args.notes,
+            tags=[args.func, args.method] 
+        )
 
-    log_function_shape(args.func, args.other_param)
+    log_function_shape(args.func, )
 
     if args.method == "cmaes":
         run_cmaes(func, config)
@@ -215,10 +226,7 @@ def main(args):
     else:
         raise NotImplementedError
 
-
     wandb.finish()
-
-
 
 
 if __name__ == "__main__":
@@ -227,7 +235,7 @@ if __name__ == "__main__":
     parser.add_argument("--name", default="")
     parser.add_argument("--notes", default="")
     parser.add_argument("--func", default="rastrigin")
-    parser.add_argument("--other_param", default="{}")
+    parser.add_argument("--n_dim", default=3, type=int)
     parser.add_argument("--method", default="quads")
     parser.add_argument("--sampler_type", default="quantum")
     parser.add_argument("--n_digits", default=8, type=int)
@@ -244,7 +252,4 @@ if __name__ == "__main__":
     parser.add_argument('--init_step_size', type=np.float32, default=0.5)
     args = parser.parse_args()
     main(args)
-
-
-
 

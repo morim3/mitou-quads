@@ -32,7 +32,7 @@ def get_styblinski_tang(dim=3, target=None):
     target = np.array([-2.90353402777118 / 10 + 0.5] * dim, dtype=np.float32)
 
     def base_fun(x):
-        return np.sum(x**4 - 16 * x**2 + 5 * x, axis=-1) / 2
+        return np.sum(x ** 4 - 16 * x**2 + 5 * x, axis=-1) / 2
     def styblinski_tang(x):
         optimal_point = -2.90353402777118 * np.ones_like(x)
 
@@ -47,7 +47,7 @@ def get_easom(dim=2, target=None):
     target = np.array([(np.pi+100)/200, (np.pi+100)/200], dtype=np.float32)
     def fun(x):
         x = x * 200 - 100
-        return - np.cos(x[:, 0])*np.cos(x[:, 1])*np.exp(-((x[:, 0]-np.pi)**2+(x[:, 1]-np.pi)**2)) + 1
+        return - np.cos(x[..., 0])*np.cos(x[..., 1])*np.exp(-((x[..., 0]-np.pi)**2+(x[..., 1]-np.pi)**2)) + 1
         
     return fun, target
 
@@ -55,7 +55,7 @@ def get_schwefel(dim=3, target=None):
     target = (np.ones(dim, dtype=np.float32)*420.9687 + 500) / 1000
     def fun(x):
         x = x * 1000 -500
-        return - np.sum(x*np.sin(np.sqrt(np.abs(x))), axis=-1)
+        return 418.9829*dim- np.sum(x*np.sin(np.sqrt(np.abs(x))), axis=-1)
 
     return fun, target
 
