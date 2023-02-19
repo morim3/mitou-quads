@@ -11,6 +11,7 @@ import json
 def get_sample_size(dim):
     return int(4+np.log(dim)*3)
 
+
 def wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global):
 
     for trial in range(len(eval_hists)):
@@ -200,6 +201,7 @@ def main(args):
     if config["sampler_type"] == "quantum":
         wandb.init(
             project="mitou-quads",
+            group=args.group,
             entity="morim3",
             config=config,
             name=args.name,
@@ -208,6 +210,7 @@ def main(args):
     elif config["sampler_type"] == "classical":
         wandb.init(
             project="mitou-quads-classical",
+            group=args.group,
             entity="morim3",
             config=config,
             name=args.name,
@@ -233,6 +236,7 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("--name", default="")
+    parser.add_argument("--group", default="")
     parser.add_argument("--notes", default="")
     parser.add_argument("--func", default="rastrigin")
     parser.add_argument("--n_dim", default=3, type=int)
