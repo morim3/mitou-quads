@@ -31,7 +31,7 @@ def get_samples_grover(func, quads_param:QuadsParam, config):
 
 
 def optimal_amplify_num(p):
-    return np.arccos(p) / 2 / np.arcsin(p)
+    return np.arccos(np.sqrt(p)) / 2 / np.arcsin(np.sqrt(p))
 
 def get_samples_classical(func, quads_param:QuadsParam, config):
     n_sampled = 0

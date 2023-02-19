@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from models.amp_sim.sampler import sampling_grover_oracle
 
 def optimal_amplify_num(p):
-    return np.arccos(p) / 2 / np.arcsin(p)
+    return np.arccos(np.sqrt(p)) / 2 / np.arcsin(np.sqrt(p))
 
 def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
     n_eval = 0
