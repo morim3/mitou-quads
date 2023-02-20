@@ -46,7 +46,7 @@ def wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converg
     elif success_rate == 0:
         mean_eval_to_global = None
     else:
-        mean_eval_to_global = mean_eval_failure / success_rate + mean_eval_success
+        mean_eval_to_global = mean_eval_failure * (1-success_rate) / success_rate + mean_eval_success
 
     wandb.log({
                   f"mean_eval_success": mean_eval_success,
@@ -54,7 +54,9 @@ def wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converg
                   f"mean_eval_failure": mean_eval_failure,
                   f"std_eval_failure": std_eval_failure,
                   f"converged_rate": success_rate,
-                  f"mean_eval_to_global": mean_eval_to_global
+                  f"mean_eval_to_global": mean_eval_to_global,
+                  f"eval_total": eval_total, 
+                  f"converged_to_global": converged_to_global
               })
 
     opt_process = [[i, x, y] for i in range(len(eval_hists)) for (x, y) in zip(eval_hists[i], min_func_hists[i]) ]
