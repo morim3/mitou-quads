@@ -245,7 +245,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_digits", default=8, type=int)
     parser.add_argument("--iter_num", default=100, type=int)
     parser.add_argument("--trial_num", default=100, type=int)
-    parser.add_argument("--terminate_step_size", default=0.01, type=np.float32)
+    parser.add_argument("--terminate_step_size", default=0.001, type=np.float32)
     parser.add_argument("--terminate_eps", default=0.01, type=np.float32)
     parser.add_argument("--quantile", default=0.2, type=np.float32)
     parser.add_argument("--smoothing_th", default=0.5, type=np.float32)
