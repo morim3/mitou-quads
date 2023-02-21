@@ -7,6 +7,6 @@ scipy
 qiskit
 qiskit-finance
 pylatexenc
-qulacs
 tqdm
 joblib
+wandb
