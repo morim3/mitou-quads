@@ -44,7 +44,7 @@ def run_grover_minimization(
     dim = config["n_dim"]
     target = config["target"]
 
-    for i in range(config["iter_num"]):
+    for i in range(config["max_iter"]):
 
         try:
 
@@ -56,7 +56,7 @@ def run_grover_minimization(
             elif config["sampler_type"] == "classical":
                 x, y, eval_num = uniform_sampling_classical(func, dim, threshold, config["eval_limit_one_sample"])
             else:
-                raise NotImplemented
+                raise ValueError("Invalid sampler type")
 
         except TimeoutError:
             break
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         "dim": 2,
         "init_threshold": 1.,
         "n_digits": 8,
-        "iter_num": 100,
+        "max_iter": 100,
         "terminate_eps": 0.01,
         "eval_limit_one_sample": 10000,
         "optimal_amplify_num": True,

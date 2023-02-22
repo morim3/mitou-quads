@@ -17,7 +17,7 @@ def run_cmaes(func, init_cma_param: CMAParam, config, verbose=False):
 
     min_val = np.inf
 
-    for gen in range(config["iter_num"]):
+    for gen in range(config["max_iter"]):
         sampled = get_normal_samples(cma_param, config["n_dim"], config["n_samples"])
         fitnesses = func(sampled)
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     config = {
         "n_dim": 2,
-        "iter_num": 1000,
+        "max_iter": 1000,
         "n_samples": 7,
         "terminate_step_size": 0.001,
         "terminate_eps": 0.001,
