@@ -52,6 +52,8 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
         if func_val < quads_param.threshold:
             accepted = np.concatenate([accepted, sample], axis=0)
             accepted_val = np.concatenate([accepted_val, func_val])
+            n_sampled += 1
+
         n_sampled = accepted.shape[0]
 
         if n_eval > config["eval_limit_one_sample"]:
