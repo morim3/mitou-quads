@@ -12,14 +12,20 @@ def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
     n_eval = 0
 
     while True:
-        sample = np.random.uniform(0.0, 1.0, dim)
+
+        n_parallel = 100000
+        sample = np.random.uniform(0.0, 1.0, (n_parallel, dim))
 
         func_val = func(sample)
-        n_eval += 1
-
-        if func_val < threshold:
-            threshold = func_val
+        is_accepted = func_val < threshold
+        if np.any(is_accepted):
+            accepted_index = np.where(is_accepted)[0][0]
+            n_eval += accepted_index + 1
+            sample = sample[accepted_index]
+            func_val = func_val[accepted_index]
             break
+        else:
+            n_eval += n_parallel
 
         if n_eval > oracle_eval_limit:
             raise TimeoutError

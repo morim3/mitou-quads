@@ -44,15 +44,24 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
     BD = np.matmul(B, np.diag(diagD))
     n_samples = config["n_samples"]
     while n_sampled < n_samples:
-        sample = get_normal_samples(quads_param.cma_param, config["n_dim"], 1, BD=BD)
-        func_val = func(sample)
-            
-        n_eval += 1
+        n_parallel = 100
+        sample = get_normal_samples(quads_param.cma_param, config["n_dim"], n_parallel, BD=BD)
 
-        if func_val < quads_param.threshold:
-            accepted = np.concatenate([accepted, sample], axis=0)
-            accepted_val = np.concatenate([accepted_val, func_val])
-            n_sampled += 1
+        func_val = func(sample)
+        accept_flag = func_val < quads_param.threshold
+        accept_num = np.count_nonzero(accept_flag)
+
+        if accept_num + n_sampled >= n_samples:
+            n_eval += np.sort(np.where(accept_flag)[0])[n_samples-n_sampled-1]+1
+            accepted = np.concatenate([accepted, sample[accept_flag][:n_samples-n_sampled]])
+            accepted_val = np.concatenate([accepted_val, func_val[accept_flag][:n_samples-n_sampled]])
+            break
+            
+        n_eval += n_parallel
+        n_sampled += accept_num
+        accepted = np.concatenate([accepted, sample[accept_flag]])
+        accepted_val = np.concatenate([accepted_val, func_val[accept_flag]])
+
 
         if n_eval > config["eval_limit_one_sample"]:
             raise TimeoutError
@@ -60,7 +69,7 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
     p = n_samples / n_eval
     n_eval_estimated = (optimal_amplify_num(p) + 1) * n_samples
 
-    return np.array(accepted), np.array(accepted_val), n_eval_estimated
+    return accepted, accepted_val, n_eval_estimated
 
 
 def run_quads(
@@ -122,7 +131,6 @@ def run_quads(
             print("--------")
 
         if dist_target < config["terminate_eps"] or quads_param.cma_param.step_size < config["terminate_step_size"]:
-            print(dist_target)
             break
 
     print("total_eval_num: ", sum(eval_num_hist))
