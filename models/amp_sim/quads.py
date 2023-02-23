@@ -41,9 +41,6 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
     while n_sampled < config["n_samples"]:
         sample = get_normal_samples(quads_param.cma_param, config["n_dim"], 1)
 
-        if not np.all(np.logical_and(sample<1, sample>0)):
-            continue
-
         func_val = func(sample)
         n_eval += 1
 
