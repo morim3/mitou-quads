@@ -17,6 +17,14 @@ def confidence_str(mean, std):
     else:
         return '---'
 
+
+def get_mean_eval_to_global(suc, fail, p):
+    if p != 1:
+        return suc + fail * (1-p) / p
+    else:
+        return suc
+
+
 if __name__ == '__main__':
     Result = namedtuple('Result', ['mean_eval_success', 'std_eval_success',
                         'mean_eval_failure', 'std_eval_failure', 'converged_rate', 'mean_eval_to_global'])
@@ -38,15 +46,15 @@ if __name__ == '__main__':
         # table[-1].append(confidence_str(results["quads_"+fun].mean_eval_success, results["quads_"+fun].std_eval_success))
         # table[-1].append(confidence_str(results["grover_"+fun].mean_eval_success, results["grover_"+fun].std_eval_success))
         # table[-1].append(confidence_str(results["cmaes_"+fun].mean_eval_success, results["cmaes_"+fun].std_eval_success))
-        table[-1].append(confidence_str(results["quads_"+fun].mean_eval_failure, results["quads_"+fun].std_eval_failure))
-        table[-1].append(confidence_str(results["grover_"+fun].mean_eval_failure, results["grover_"+fun].std_eval_failure))
-        table[-1].append(confidence_str(results["cmaes_"+fun].mean_eval_failure, results["cmaes_"+fun].std_eval_failure))
+        # table[-1].append(confidence_str(results["quads_"+fun].mean_eval_failure, results["quads_"+fun].std_eval_failure))
+        # table[-1].append(confidence_str(results["grover_"+fun].mean_eval_failure, results["grover_"+fun].std_eval_failure))
+        # table[-1].append(confidence_str(results["cmaes_"+fun].mean_eval_failure, results["cmaes_"+fun].std_eval_failure))
         # table[-1].append('{:.4g}'.format(results["quads_"+fun].converged_rate))
         # table[-1].append('{:.4g}'.format(results["grover_"+fun].converged_rate))
         # table[-1].append('{:.4g}'.format(results["cmaes_"+fun].converged_rate))
-        # table[-1].append('{:.4g}'.format(results["quads_"+fun].mean_eval_to_global))
-        # table[-1].append('{:.4g}'.format(results["grover_"+fun].mean_eval_to_global))
-        # table[-1].append('{:.4g}'.format(results["cmaes_"+fun].mean_eval_to_global))
+        table[-1].append('{:.4g}'.format(get_mean_eval_to_global(results["quads_"+fun].mean_eval_success, results["quads_"+fun].mean_eval_failure, results["quads_"+fun].converged_rate)))
+        table[-1].append('{:.4g}'.format(get_mean_eval_to_global(results["grover_"+fun].mean_eval_success, results["grover_"+fun].mean_eval_failure, results["grover_"+fun].converged_rate)))
+        table[-1].append('{:.4g}'.format(get_mean_eval_to_global(results["cmaes_"+fun].mean_eval_success, results["cmaes_"+fun].mean_eval_failure, results["cmaes_"+fun].converged_rate)))
             
 
     print(pd.DataFrame(table, index=funs).to_latex())
