@@ -1,8 +1,8 @@
 
-for dim in 2 3 4 
+for dim in 2 3 4 5
 do
   # for fun in rastrigin schwefel
-  for fun in styblinski_tang
+  for fun in styblinski_tang schwefel
   do
     for method in cmaes quads grover
     do
@@ -12,9 +12,9 @@ do
 
 done
 
-for dim in 5 6 7
+for dim in 6 7 8
 do
-for fun in styblinski_tang
+for fun in styblinski_tang schwefel
 do
   for method in cmaes quads
   do

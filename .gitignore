@@ -1,4 +1,6 @@
 # venv
+wandb
+artiface
 venv/
 .venv/
 

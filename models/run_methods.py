@@ -14,13 +14,13 @@ def get_sample_size(dim):
 
 def wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global):
 
-    for trial in range(len(eval_hists)):
-        wandb.log({
-            f"eval_num_{trial}": eval_hists[trial],
-            f"objective_func_{trial}": min_func_hists[trial],
-            f"dist_target_{trial}": dist_target_hists[trial],
-            "trial": trial
-        })
+    # for trial in range(len(eval_hists)):
+    #     wandb.log({
+    #         f"eval_num_{trial}": eval_hists[trial],
+    #         f"objective_func_{trial}": min_func_hists[trial],
+    #         f"dist_target_{trial}": dist_target_hists[trial],
+    #         "trial": trial
+    #     })
 
     eval_total = np.array(eval_total)
     converged_to_global = np.array(converged_to_global)
@@ -41,9 +41,7 @@ def wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converg
         mean_eval_failure = None
         std_eval_failure = None
 
-    if success_rate == 1:
-        mean_eval_to_global = mean_eval_success
-    elif success_rate == 0:
+    if success_rate == 0:
         mean_eval_to_global = None
     else:
         mean_eval_to_global = mean_eval_failure * (1-success_rate) / success_rate + mean_eval_success
