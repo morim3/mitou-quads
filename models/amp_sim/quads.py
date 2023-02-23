@@ -54,8 +54,6 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
             accepted_val = np.concatenate([accepted_val, func_val])
             n_sampled += 1
 
-        n_sampled = accepted.shape[0]
-
         if n_eval > config["eval_limit_one_sample"]:
             raise TimeoutError
 
@@ -124,6 +122,7 @@ def run_quads(
             print("--------")
 
         if dist_target < config["terminate_eps"] or quads_param.cma_param.step_size < config["terminate_step_size"]:
+            print(dist_target)
             break
 
     print("total_eval_num: ", sum(eval_num_hist))

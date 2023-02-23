@@ -43,11 +43,11 @@ def run_cmaes(func, init_cma_param: CMAParam, config, verbose=False):
             print("step_size: ", cma_param.step_size)
             print("eval_num: ", eval_num_hist[-1])
             print("--------")
+            print("total_eval_num: ", sum(eval_num_hist))
 
         if dist_target < config["terminate_eps"] or cma_param.step_size < config["terminate_step_size"]:
             break
 
-    print("total_eval_num: ", sum(eval_num_hist))
     return cma_param, (np.array(min_func_hist), np.array(eval_num_hist), np.array(dist_target_hist), param_hist)
 
 if __name__ == "__main__":
