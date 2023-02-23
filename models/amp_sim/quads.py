@@ -36,27 +36,31 @@ def optimal_amplify_num(p):
 def get_samples_classical(func, quads_param:QuadsParam, config):
     n_sampled = 0
     n_eval = 0
-    accepted = []
-    accepted_val = []
-    while n_sampled < config["n_samples"]:
-        sample = get_normal_samples(quads_param.cma_param, config["n_dim"], 1)
+    accepted = np.empty((0, config["n_dim"]))
+    accepted_val = np.empty(0)
 
+    diagDD, B = np.linalg.eigh(quads_param.cma_param.cov)
+    diagD = np.sqrt(diagDD)
+    BD = np.matmul(B, np.diag(diagD))
+    n_samples = config["n_samples"]
+    while n_sampled < n_samples:
+        sample = get_normal_samples(quads_param.cma_param, config["n_dim"], 1, BD=BD)
         func_val = func(sample)
+            
         n_eval += 1
+
+        if func_val < quads_param.threshold:
+            accepted = np.concatenate([accepted, sample], axis=0)
+            accepted_val = np.concatenate([accepted_val, func_val])
+        n_sampled = accepted.shape[0]
 
         if n_eval > config["eval_limit_one_sample"]:
             raise TimeoutError
 
-        if func_val < quads_param.threshold:
-            n_sampled += 1
-            accepted.append(sample)
-            accepted_val.append(func_val)
+    p = n_samples / n_eval
+    n_eval_estimated = (optimal_amplify_num(p) + 1) * n_samples
 
-    p = n_sampled / n_eval
-    n_eval_estimated = (optimal_amplify_num(p) + 1) * config["n_samples"]
-
-
-    return np.array(accepted[0]), np.array(accepted_val[0]), n_eval_estimated
+    return np.array(accepted), np.array(accepted_val), n_eval_estimated
 
 
 def run_quads(
