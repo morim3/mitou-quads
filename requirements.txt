@@ -10,3 +10,5 @@ pylatexenc
 qulacs
 tqdm
 joblib
+jax
+jaxlib
