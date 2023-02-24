@@ -36,30 +36,40 @@ def optimal_amplify_num(p):
 def get_samples_classical(func, quads_param:QuadsParam, config):
     n_sampled = 0
     n_eval = 0
-    accepted = []
-    accepted_val = []
-    while n_sampled < config["n_samples"]:
-        sample = get_normal_samples(quads_param.cma_param, config["n_dim"], 1)
+    accepted = np.empty((0, config["n_dim"]))
+    accepted_val = np.empty(0)
 
-        if not np.all(np.logical_and(sample<1, sample>0)):
-            continue
+    diagDD, B = np.linalg.eigh(quads_param.cma_param.cov)
+    diagD = np.sqrt(diagDD)
+    BD = np.matmul(B, np.diag(diagD))
+    n_samples = config["n_samples"]
+    while n_sampled < n_samples:
+        n_parallel = 100
+        sample = get_normal_samples(quads_param.cma_param, config["n_dim"], n_parallel, BD=BD)
 
         func_val = func(sample)
-        n_eval += 1
+        accept_flag = func_val < quads_param.threshold
+        accept_num = np.count_nonzero(accept_flag)
+
+        if accept_num + n_sampled >= n_samples:
+            n_eval += np.sort(np.where(accept_flag)[0])[n_samples-n_sampled-1]+1
+            accepted = np.concatenate([accepted, sample[accept_flag][:n_samples-n_sampled]])
+            accepted_val = np.concatenate([accepted_val, func_val[accept_flag][:n_samples-n_sampled]])
+            break
+            
+        n_eval += n_parallel
+        n_sampled += accept_num
+        accepted = np.concatenate([accepted, sample[accept_flag]])
+        accepted_val = np.concatenate([accepted_val, func_val[accept_flag]])
+
 
         if n_eval > config["eval_limit_one_sample"]:
             raise TimeoutError
 
-        if func_val < quads_param.threshold:
-            n_sampled += 1
-            accepted.append(sample)
-            accepted_val.append(func_val)
+    p = n_samples / n_eval
+    n_eval_estimated = (optimal_amplify_num(p) + 1) * n_samples
 
-    p = n_sampled / n_eval
-    n_eval_estimated = (optimal_amplify_num(p) + 1) * config["n_samples"]
-
-
-    return np.array(accepted[0]), np.array(accepted_val[0]), n_eval_estimated
+    return accepted, accepted_val, n_eval_estimated
 
 
 def run_quads(

@@ -9,4 +9,6 @@ qiskit-finance
 pylatexenc
 tqdm
 joblib
+jax
+jaxlib
 wandb
