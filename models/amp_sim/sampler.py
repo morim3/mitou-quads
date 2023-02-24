@@ -8,20 +8,23 @@ from numpy.typing import NDArray
 
 
 def get_grid_point(n_bits, range_min, range_max, dim):
-    x = [np.linspace(range_min, range_max, 2 ** n_bits, endpoint=False, dtype=np.float32) for _ in range(dim)]
-    grid = np.stack(np.meshgrid(*x, indexing="ij"), axis=-1).reshape(-1, dim)
+    x = [np.linspace(range_min, range_max,
+                     2 ** n_bits, endpoint=False, dtype=np.float32)
+                     for _ in range(dim)]
+    grid = np.stack(
+        np.meshgrid(*x, indexing="ij"), axis=-1).reshape(-1, dim)
     return grid
 
 def discrete_normal(n_bits, mean, cov, dim, range_min=0, range_max=1):
     grid = get_grid_point(n_bits, range_min, range_max, dim)
     pdf = jax.scipy.stats.multivariate_normal.pdf(grid, mean=mean, cov=cov)
-    return pdf / np.sum(pdf)
+    return pdf / jnp.sum(pdf)
 
-def initalize_normal_state(n_digits:int, mu: NDArray, cov: NDArray,  dim:int):
+def init_normal_state(n_digits:int, mu: NDArray, cov: NDArray, dim:int):
     distribution = discrete_normal(n_digits, mu, cov, dim, range_min=0, range_max=1)
     return jnp.sqrt(distribution)
 
-def init_uniform_state(n_digits:int, dim:int):
+def init_uniform_state(n_digits: int, dim: int):
     distribution = jnp.ones(2**(n_digits*dim), dtype=np.float32) / 2 ** (n_digits * dim)
     return jnp.sqrt(distribution)
 
@@ -95,9 +98,9 @@ def sampling_grover_oracle(
     if initial_state is None:
         if not uniform:
             if mu is None or cov is None:
-                raise NotImplementedError
+                raise ValueError
             else:
-                initial_state = initalize_normal_state(n_digits, mu, cov, dim) 
+                initial_state = init_normal_state(n_digits, mu, cov, dim) 
         else:
             initial_state = init_uniform_state(n_digits, dim)
     
