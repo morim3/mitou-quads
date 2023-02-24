@@ -2,16 +2,16 @@ import numpy as np
 from models.parameters import CMAParam, CMAHyperParam, update_cma_params, get_normal_samples
 
 
-def run_cmaes(func, init_cma_param: CMAParam, config, verbose=False):
+def run_cmaes(func, config, verbose=False):
 
-    cma_param = init_cma_param
+    init_param = CMAParam(config["init_mean"], config["init_cov"], config["init_step_size"])
 
     n_elite = int(np.floor(config["n_samples"] / 2))
     hp = CMAHyperParam(config["n_dim"], n_elite, )
 
-
+    cma_param = init_param
     eval_num_hist = []
-    param_hist = [init_cma_param]
+    param_hist = [init_param]
     min_func_hist = []
     dist_target_hist = []
 
@@ -36,18 +36,19 @@ def run_cmaes(func, init_cma_param: CMAParam, config, verbose=False):
 
 
         if verbose:
-            print("-------")
-            print("iter", gen)
-            print("mean: ", cma_param.mean)
-            print("cov: ", cma_param.cov)
-            print("step_size: ", cma_param.step_size)
-            print("eval_num: ", eval_num_hist[-1])
-            print("--------")
-            print("total_eval_num: ", sum(eval_num_hist))
+            print(f"""\
+--- iter {gen} -----------------
+mean: {cma_param.mean}
+cov: {cma_param.cov}
+step_size: {cma_param.step_size}
+eval_num: {eval_num_hist[-1]}
+----------------------------""")
 
         if dist_target < config["terminate_eps"] or cma_param.step_size < config["terminate_step_size"]:
             break
 
+    if verbose:
+        print("total_eval_num: ", sum(eval_num_hist))
     return cma_param, (np.array(min_func_hist), np.array(eval_num_hist), np.array(dist_target_hist), param_hist)
 
 if __name__ == "__main__":
