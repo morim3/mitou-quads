@@ -22,7 +22,7 @@ do
 done
 done
    
-$fun=styblinski_tang
+fun="styblinski_tang"
 for dim in 2 3 4 5 6 7
 do
 for method in cmaes quads grover
