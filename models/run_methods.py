@@ -1,16 +1,17 @@
+import pickle
 import numpy as np
 from tqdm import tqdm
+import wandb
 from models.amp_sim import quads, grover_adaptive
 from models.classical import cmaes
-from models.parameters import QuadsParam, QuadsHyperParam, CMAParam, CMAHyperParam
+from models.parameters import QuadsParam, CMAParam
 from utils import objective_functions
-import wandb
-import json
 
+def get_objective_function(name, **kwargs):
+    return objective_functions.__getattribute__(f"get_{name}")(**kwargs)
 
 def get_sample_size(dim):
     return int(4+np.log(dim)*3)
-
 
 def wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global):
 
@@ -75,7 +76,7 @@ def run_quads(func, config):
     quads_param = QuadsParam(
         config["init_threshold"], CMAParam(config["init_mean"], config["init_cov"], config["init_step_size"] ))
 
-    for trial in tqdm(range(config["trial_num"])):
+    for trial in tqdm(range(config["n_trial"])):
         _, (min_func_hist, eval_num_hist, dist_target_hist, _) = quads.run_quads(func, quads_param, config, verbose=False)
         eval_num_hist = np.cumsum(eval_num_hist)
         eval_hists.append(eval_num_hist)
@@ -84,19 +85,22 @@ def run_quads(func, config):
         eval_total.append(eval_num_hist[-1])
         converged_to_global.append(dist_target_hist[-1] < config["terminate_eps"])
 
+    return {
+        "eval_hists": eval_hists,
+        "min_func_hists": min_func_hists,
+        "dist_target_hists": dist_target_hists,
+        "eval_total": eval_total,
+        "converged_to_global": converged_to_global
+    }
 
-    wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global)
-
-    return eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global
-
-def run_grover(func, config, ):
-    min_func_hists = []
+def run_grover(func, config):
     eval_hists = []
+    min_func_hists = []
     dist_target_hists = []
     eval_total = []
     converged_to_global = []
 
-    for trial in tqdm(range(config["trial_num"])):
+    for trial in tqdm(range(config["n_trial"])):
         _, (min_func_hist, eval_num_hist, dist_target_hist) = grover_adaptive.run_grover_minimization(func, config, False)
 
         eval_num_hist = np.cumsum(eval_num_hist)
@@ -106,9 +110,13 @@ def run_grover(func, config, ):
         eval_total.append(eval_num_hist[-1])
         converged_to_global.append(dist_target_hist[-1] < config["terminate_eps"])
 
-    wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global)
-
-    return eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global
+    return {
+        "eval_hists": eval_hists,
+        "min_func_hists": min_func_hists,
+        "dist_target_hists": dist_target_hists,
+        "eval_total": eval_total,
+        "converged_to_global": converged_to_global
+    }
 
 def run_cmaes(func, config):
     eval_hists = []
@@ -119,7 +127,7 @@ def run_cmaes(func, config):
 
     cmaes_param = CMAParam(config["init_mean"], config["init_cov"], config["init_step_size"])
 
-    for trial in tqdm(range(config["trial_num"])):
+    for trial in tqdm(range(config["n_trial"])):
         _, (min_func_hist, eval_num_hist, dist_target_hist, _) = cmaes.run_cmaes(func, cmaes_param, config)
 
         eval_num_hist = np.cumsum(eval_num_hist)
@@ -129,10 +137,13 @@ def run_cmaes(func, config):
         eval_total.append(eval_num_hist[-1])
         converged_to_global.append(dist_target_hist[-1] < config["terminate_eps"])
 
-
-    wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global)
-
-    return eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global
+    return {
+        "eval_hists": eval_hists,
+        "min_func_hists": min_func_hists,
+        "dist_target_hists": dist_target_hists,
+        "eval_total": eval_total,
+        "converged_to_global": converged_to_global
+    }
 
 def log_function_shape(func_name, ):
     import matplotlib.pyplot as plt
@@ -141,7 +152,7 @@ def log_function_shape(func_name, ):
     X, Y = np.meshgrid(np.linspace(0, 1, 500), np.linspace(0, 1, 500))
     grid = np.stack([X, Y], axis=-1).reshape((-1, 2))
     func_value = func(grid).reshape((500, 500))
-    fig, ax = plt.subplots(dpi=500)
+    fig, ax = plt.subplots(dpi=100)
     ax.imshow(func_value)
     ax.set_title(f"{func_name} function")
     ax.set_xlabel("x")
@@ -152,110 +163,94 @@ def log_function_shape(func_name, ):
 
 def main(args):
 
+    n_dim = args.n_dim
 
-    func, target = objective_functions.__getattribute__(f"get_{args.func}")(dim=args.n_dim)
+    func, target = get_objective_function(args.func, dim=n_dim)
+    assert n_dim == target.shape[-1]
 
+    init_mean = args.init_normal_mean
+    if len(init_mean) == 1:
+        init_mean = init_mean * n_dim
+    init_mean = np.array(init_mean)
+    assert n_dim == init_mean.shape[-1]
 
-    n_dim = target.shape[-1]
-    
-
-    if len(args.init_normal_mean) == 1:
-        init_normal_mean = np.array(args.init_normal_mean * n_dim)
-    else:
-        init_normal_mean = np.array(args.init_normal_mean)
-
-    init_threshold = func(init_normal_mean)
     init_cov = np.identity(n_dim) * args.init_normal_std
+    init_threshold = func(init_mean)
 
-    if n_dim != init_normal_mean.shape[-1]:
-        raise TypeError("args.init_normal mean != n_dim of func")
-
-    if args.method == "cmaes":
+    if args.method == "grover":
+        n_samples = None
+    elif args.method == "cmaes":
         n_samples = get_sample_size(n_dim)
     elif args.method == "quads":
         # good sample in cmaes is half better samples
         n_samples = int(get_sample_size(n_dim) / 2) + 1
-    else:
-        n_samples = None
+    
+    config = vars(args)
 
-    config = {
-        "func": args.func,
-        "sampler_type": args.sampler_type,
-        "method": args.method,
-        "n_dim": n_dim,
-        "n_digits": args.n_digits,
-        "iter_num": args.iter_num,
-        "trial_num": args.trial_num,
+    config.update({
         "n_samples": n_samples,
-        "terminate_step_size": args.terminate_step_size,
-        "terminate_eps": args.terminate_eps,
-        "optimal_amplify_num": args.optimal_amplify_num,
-        "quantile": args.quantile,
-        "smoothing_th": args.smoothing_th,
         "target": target,
-        "eval_limit_one_sample": args.eval_limit_one_sample,
-        "init_mean": init_normal_mean,
+        "init_mean": init_mean,
         "init_cov": init_cov,
         "init_threshold": init_threshold,
-        "init_step_size": args.init_step_size,
-    }
+    })
+
+    print(f"config: {config}")
  
-    if config["sampler_type"] == "quantum":
-        wandb.init(
-            project="mitou-quads",
-            group=args.group,
-            entity="morim3",
-            config=config,
-            name=args.name,
-            notes = args.notes
-        )
-    elif config["sampler_type"] == "classical":
-        wandb.init(
-            project="mitou-quads-classical",
-            group=args.group,
-            entity="morim3",
-            config=config,
-            name=args.name,
-            notes=args.notes,
-            tags=[args.func, args.method] 
-        )
+    with wandb.init(
+        project="mitou-quads",
+        config=config,
+        mode="disabled" if args.test else "online",
+        tags=[args.func, args.method, args.sampler_type] 
+    ) as wandb_run:
+        
+        artifact = wandb.Artifact("experiment-result", type="result")
+        
+        log_function_shape(args.func, )
 
-    log_function_shape(args.func, )
+        if args.method == "grover":
+            result = run_grover(func, config)
+        elif args.method == "cmaes":
+            result = run_cmaes(func, config)
+        elif args.method == "quads":
+            result = run_quads(func, config)
+        
+        wandb_log(**result)
 
-    if args.method == "cmaes":
-        run_cmaes(func, config)
-    elif args.method == "grover":
-        run_grover(func, config)
-    elif args.method == "quads":
-        run_quads(func, config)
-    else:
-        raise NotImplementedError
+        result.update({
+            "config": config
+        })
 
-    wandb.finish()
+        with artifact.new_file(f"result.pickle", mode='wb') as f:
+            pickle.dump(result, f)
 
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument("--name", default="")
-    parser.add_argument("--group", default="")
-    parser.add_argument("--notes", default="")
-    parser.add_argument("--func", default="rastrigin")
-    parser.add_argument("--n_dim", default=3, type=int)
-    parser.add_argument("--method", default="quads")
-    parser.add_argument("--sampler_type", default="quantum")
-    parser.add_argument("--n_digits", default=8, type=int)
-    parser.add_argument("--iter_num", default=100, type=int)
-    parser.add_argument("--trial_num", default=100, type=int)
+    parser.add_argument("--func", default="rastrigin", help="test function to optimize")
+    parser.add_argument("--n_dim", default=3, type=int, help="number of dimension")
+    parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads"], help="method used in optimization")
+    parser.add_argument("--sampler_type", default="quantum", choices=["quantum", "classical"],
+                        help="type of sampler (quantum: sample by quantum simulator, classical: sample by classical algorithm)")
+    parser.add_argument("--n_digits", default=8, type=int,
+                        help="number of digits quantizing the function space")
+    parser.add_argument("--max_iter", default=100, type=int,
+                        help="maximum number of optimization iterations")
+    parser.add_argument("--test", action="store_true",
+                        help="Run in smoke-test mode")
+    parser.add_argument("--verbose", action="store_false")
+    parser.add_argument("--n_trial", default=100, type=int)
     parser.add_argument("--terminate_step_size", default=0.01, type=np.float32)
     parser.add_argument("--terminate_eps", default=0.01, type=np.float32)
     parser.add_argument("--quantile", default=0.2, type=np.float32)
     parser.add_argument("--smoothing_th", default=0.5, type=np.float32)
     parser.add_argument("--optimal_amplify_num", default=False, type=bool)
     parser.add_argument("--eval_limit_one_sample", default=10000, type=int)
-    parser.add_argument('--init_normal_mean', nargs='+', type=np.float32)
+    parser.add_argument('--init_normal_mean', nargs='+', type=np.float32, default=[0.8])
     parser.add_argument('--init_normal_std', type=np.float32, default=1)
     parser.add_argument('--init_step_size', type=np.float32, default=0.5)
     args = parser.parse_args()
+    
     main(args)
 

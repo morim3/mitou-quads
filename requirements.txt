@@ -7,8 +7,8 @@ scipy
 qiskit
 qiskit-finance
 pylatexenc
-qulacs
 tqdm
 joblib
 jax
 jaxlib
+wandb
