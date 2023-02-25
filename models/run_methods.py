@@ -167,8 +167,6 @@ def main(args):
         tags=[args.func, args.method, args.sampler_type] 
     ) as wandb_run:
         
-        artifact = wandb.Artifact(f"result-{args.sampler_type}-{args.method}-{args.func}", type="result")
-
         wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), func_name=args.func, init_mu=init_mean)})
         result = run_trials(func, config)
         result = results_postprocess(result, config)
@@ -177,8 +175,6 @@ def main(args):
         save_path = os.path.join(wandb.run.dir, "result.pickle")
         with open(save_path, mode='wb') as f:
             pickle.dump(result, f)
-        
-        wandb_run.log_artifact(artifact)
 
         wandb.save(save_path)
 
