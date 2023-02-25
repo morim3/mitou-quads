@@ -155,7 +155,10 @@ def main(args):
     print(f"config: {config}")
  
     with wandb.init(
+        entity=args.entity,
         project=args.project_name,
+        name=args.name,
+        group=args.group,
         config=config,
         mode="disabled" if args.test else "online",
         tags=[args.func, args.method, args.sampler_type] 
@@ -163,7 +166,7 @@ def main(args):
         
         artifact = wandb.Artifact("experiment-result", type="result")
 
-        wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), args.func)})
+        wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), func_name=args.func, init_mu=init_mean)})
         result = run_trials(func, config)
         result = results_postprocess(result, config)
         wandb_log(result)
@@ -178,6 +181,9 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("--project_name")
+    parser.add_argument("--name", default=None)
+    parser.add_argument("--group", default=None)
+    parser.add_argument("--entity", default=None)
     parser.add_argument("--func", default="rastrigin", help="test function to optimize")
     parser.add_argument("--n_dim", default=3, type=int, help="number of dimension")
     parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads"], help="method used in optimization")
