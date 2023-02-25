@@ -4,11 +4,11 @@ from typing import Callable, List, Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from models.amp_sim.sampler import initalize_normal_state, sampling_grover_oracle
+from models.amp_sim.sampler import init_normal_state, sampling_grover_oracle
 from models.parameters import CMAHyperParam, CMAParam, QuadsParam, QuadsHyperParam, update_quads_params, get_normal_samples
 
 
-def get_samples_grover(func, quads_param:QuadsParam, config):
+def get_samples_grover(func, quads_param: QuadsParam, config):
     accepted = []
     accepted_val = []
     mean = quads_param.cma_param.mean
@@ -17,7 +17,7 @@ def get_samples_grover(func, quads_param:QuadsParam, config):
 
     n_eval = 0
     for _ in range(config["n_samples"]):
-        initial_state = initalize_normal_state(
+        initial_state = init_normal_state(
             config["n_digits"], mean, cov, config["n_dim"])
         x, y, eval_num = sampling_grover_oracle(
             func, mean, cov, config["n_digits"], config["n_dim"], threshold, optimal_amplify_num=config["optimal_amplify_num"], initial_state=initial_state, oracle_eval_limit=config["eval_limit_one_sample"])
@@ -90,7 +90,7 @@ def run_quads(
 
     min_val = np.inf
 
-    for i in range(config["iter_num"]):
+    for i in range(config["max_iter"]):
         # しきい値未満のサンプルを得る
         try:
             if config["sampler_type"] == "quantum":
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         "sampler_type": "classical",
         "n_dim": 2,
         "n_digits": 8,
-        "iter_num": 30,
+        "max_iter": 30,
         "n_samples": 3,
         "terminate_step_size": 0.001,
         "terminate_eps": 0.001,
