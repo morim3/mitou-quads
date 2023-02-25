@@ -15,22 +15,22 @@ def plot_function_surface(func, target=None, func_name="", init_mu=None, ax=None
     ax.scatter([init_mu[0]*grid_num], [init_mu[1]*grid_num], marker='.', s=10, c="orange")
     return fig
 
-def plot_optimization_dynamics(eval_hists, min_val_hists, ax=None):
+def plot_optimization_dynamics(eval_hists, min_func_hists, ax=None):
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 4.5))
         plt.yscale('log')
 
     term_eval_nums = np.array([np.cumsum(eval_hist)[-1] for eval_hist in eval_hists])
-    term_vals = np.array([min_val_hist[-1] for min_val_hist in min_val_hists])
+    term_vals = np.array([min_func_hist[-1] for min_func_hist in min_func_hists])
 
     seq_len = int(np.ceil(np.max(term_eval_nums)))
     x = np.arange(seq_len)
 
     ys = []
 
-    for eval_hist, min_val_hist in zip(eval_hists, min_val_hists):
+    for eval_hist, min_func_hist in zip(eval_hists, min_func_hists):
         eval_num_hist = np.cumsum(eval_hist)
-        y = np.interp(np.arange(np.ceil(eval_num_hist[-1])), eval_num_hist, min_val_hist)
+        y = np.interp(np.arange(np.ceil(eval_num_hist[-1])), eval_num_hist, min_func_hist)
         y = np.concatenate([y, np.zeros(len(x) - len(y))])
         ys.append(y)
 
@@ -55,7 +55,7 @@ def plot_optimization_dynamics(eval_hists, min_val_hists, ax=None):
     q75 = np.array(q75)
 
     # for i in range(len(eval_hists)):
-    #     ax.plot(np.cumsum(eval_hists[i]), min_val_hists[i])
+    #     ax.plot(np.cumsum(eval_hists[i]), min_func_hists[i])
     #     ax.plot(x, ys[i])
 
     ax.fill_between(x, q10, q90, color="cyan")
@@ -65,7 +65,7 @@ def plot_optimization_dynamics(eval_hists, min_val_hists, ax=None):
 
     return ax
 
-def plot_optimization_statistics(eval_hists, min_val_hists, ax=None, c_fill1="blue", c_quantile="cyan", a_fill1=0.9, a_quantile=0.9, c_median="black", zorder=1, label="", seq_len=-1):
+def plot_optimization_statistics(eval_hists, min_func_hists, ax=None, c_fill1="blue", c_quantile="cyan", a_fill1=0.9, a_quantile=0.9, c_median="black", zorder=1, label="", seq_len=-1):
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 4.5))
         plt.yscale('log')
@@ -77,9 +77,9 @@ def plot_optimization_statistics(eval_hists, min_val_hists, ax=None, c_fill1="bl
 
     ys = []
 
-    for eval_hist, min_val_hist in zip(eval_hists, min_val_hists):
+    for eval_hist, min_func_hist in zip(eval_hists, min_func_hists):
         eval_num_hist = np.cumsum(eval_hist)
-        y = np.interp(np.arange(eval_num_hist[-1]), eval_num_hist, min_val_hist)
+        y = np.interp(np.arange(eval_num_hist[-1]), eval_num_hist, min_func_hist)
         y = np.concatenate([y, np.ones(len(x) - len(y))*y[-1]])
         ys.append(y)
 
@@ -104,7 +104,7 @@ def plot_optimization_statistics(eval_hists, min_val_hists, ax=None, c_fill1="bl
     q75 = np.array(q75)
 
     # for i in range(len(eval_hists)):
-    #     ax.plot(np.cumsum(eval_hists[i]), min_val_hists[i])
+    #     ax.plot(np.cumsum(eval_hists[i]), min_func_hists[i])
     #     ax.plot(x, ys[i])
 
     ax.fill_between(x, q10, q90, color=c_fill1, alpha=a_fill1, zorder=zorder, label=label)

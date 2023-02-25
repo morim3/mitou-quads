@@ -2,6 +2,7 @@ import pickle
 import numpy as np
 from numpy.typing import NDArray
 from tqdm import tqdm
+import joblib
 import wandb
 from models.amp_sim import quads, grover_adaptive
 from models.classical import cmaes
@@ -99,16 +100,18 @@ def run_trials(func, config):
         method = cmaes.run_cmaes
     elif args.method == "quads":
         method = quads.run_quads
-
-    for trial in tqdm(range(config["n_trial"])):
+    
+    def run_trial(func, method, config):
         _, (min_func_hist, eval_num_hist, dist_target_hist, param_hists) = method(func, config, verbose=config["verbose"])
-
         eval_num_hist = np.cumsum(eval_num_hist)
-        min_func_hists.append(np.array(min_func_hist))
-        eval_hists.append(np.array(eval_num_hist))
-        dist_target_hists.append(np.array(dist_target_hist))
-        eval_total.append(eval_num_hist[-1])
-        converged_to_global.append(dist_target_hist[-1] < config["terminate_eps"])
+        eval_total = eval_num_hist[-1]
+        converged_to_global = dist_target_hist[-1] < config["terminate_eps"]
+        return min_func_hist, eval_num_hist, dist_target_hist, eval_total, converged_to_global
+
+    min_func_hists, eval_hists, dist_target_hists, eval_total, converged_to_global = zip(
+        *joblib.Parallel(n_jobs=config["n_jobs"], prefer="threads", verbose=10)(
+            joblib.delayed(run_trial)(func, method, config) for _ in range(config["n_trial"]))
+    )
 
     return {
         "eval_hists": eval_hists,
@@ -164,7 +167,7 @@ def main(args):
         tags=[args.func, args.method, args.sampler_type] 
     ) as wandb_run:
         
-        artifact = wandb.Artifact("experiment-result", type="result")
+        artifact = wandb.Artifact(f"result-{args.sampler_type}-{args.method}-{args.func}", type="result")
 
         wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), func_name=args.func, init_mu=init_mean)})
         result = run_trials(func, config)
@@ -173,6 +176,8 @@ def main(args):
 
         with artifact.new_file(f"result.pickle", mode='wb') as f:
             pickle.dump(result, f)
+        
+        wandb_run.log_artifact(artifact)
 
         wandb.log_artifact(artifact)
 
@@ -197,6 +202,7 @@ if __name__ == "__main__":
                         help="Run in smoke-test mode")
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--n_trial", default=100, type=int)
+    parser.add_argument("--n_jobs", default=10, type=int)
     parser.add_argument("--terminate_step_size", default=0.01, type=np.float32)
     parser.add_argument("--terminate_eps", default=0.01, type=np.float32)
     parser.add_argument("--quantile", default=0.2, type=np.float32)
