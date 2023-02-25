@@ -13,15 +13,10 @@ from typing import Callable
 def get_sample_size(dim):
     return int(4+np.log(dim)*3)
 
-def wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converged_to_global):
+def results_postprocess(result, config):
 
-    # for trial in range(len(eval_hists)):
-    #     wandb.log({
-    #         f"eval_num_{trial}": eval_hists[trial],
-    #         f"objective_func_{trial}": min_func_hists[trial],
-    #         f"dist_target_{trial}": dist_target_hists[trial],
-    #         "trial": trial
-    #     })
+    eval_total = result["eval_total"]
+    converged_to_global = result["converged_to_global"]
 
     eval_total = np.array(eval_total)
     converged_to_global = np.array(converged_to_global)
@@ -49,16 +44,42 @@ def wandb_log(eval_hists, min_func_hists, dist_target_hists, eval_total, converg
     else:
         mean_eval_to_global = mean_eval_failure * (1-success_rate) / success_rate + mean_eval_success
 
+    result.update({
+        "config": config,
+        "success_rate": success_rate,
+        "mean_eval_success": mean_eval_success,
+        "std_eval_success": std_eval_success,
+        "mean_eval_failure": mean_eval_failure,
+        "std_eval_failure": std_eval_failure,
+        "mean_eval_to_global": mean_eval_to_global,
+    })
+    return result
+
+
+def wandb_log(result):
+
+    # for trial in range(len(eval_hists)):
+    #     wandb.log({
+    #         f"eval_num_{trial}": eval_hists[trial],
+    #         f"objective_func_{trial}": min_func_hists[trial],
+    #         f"dist_target_{trial}": dist_target_hists[trial],
+    #         "trial": trial
+    #     })
+
+
     wandb.log({
-                  f"mean_eval_success": mean_eval_success,
-                  f"std_eval_success": std_eval_success,
-                  f"mean_eval_failure": mean_eval_failure,
-                  f"std_eval_failure": std_eval_failure,
-                  f"converged_rate": success_rate,
-                  f"mean_eval_to_global": mean_eval_to_global,
-                  f"eval_total": eval_total, 
-                  f"converged_to_global": converged_to_global.astype(int)
+                  f"mean_eval_success": result["mean_eval_success"],
+                  f"std_eval_success": result["std_eval_success"],
+                  f"mean_eval_failure": result["mean_eval_failure"],
+                  f"std_eval_failure": result["std_eval_failure"],
+                  f"converged_rate": result["success_rate"],
+                  f"mean_eval_to_global": result["mean_eval_to_global"],
+                  f"eval_total": result["eval_total"], 
+                  f"converged_to_global": result["converged_to_global"]
               })
+
+    eval_hists = result["eval_hists"]
+    min_func_hists = result["min_func_hists"]
 
     opt_process = [[i, x, y] for i in range(len(eval_hists)) for (x, y) in zip(eval_hists[i], min_func_hists[i]) ]
     table = wandb.Table(data=opt_process, columns = ["trial", "x", "y"])
@@ -97,7 +118,6 @@ def run_trials(func, config):
         "converged_to_global": converged_to_global
     }
 
-
 def main(args):
 
     n_dim = args.n_dim
@@ -135,7 +155,7 @@ def main(args):
     print(f"config: {config}")
  
     with wandb.init(
-        project="mitou-quads",
+        project=args.project_name,
         config=config,
         mode="disabled" if args.test else "online",
         tags=[args.func, args.method, args.sampler_type] 
@@ -144,21 +164,20 @@ def main(args):
         artifact = wandb.Artifact("experiment-result", type="result")
 
         wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), args.func)})
-
         result = run_trials(func, config)
-        wandb_log(**result)
-
-        result.update({
-            "config": config
-        })
+        result = results_postprocess(result, config)
+        wandb_log(result)
 
         with artifact.new_file(f"result.pickle", mode='wb') as f:
             pickle.dump(result, f)
+
+        wandb.log_artifact(artifact)
 
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
+    parser.add_argument("--project_name")
     parser.add_argument("--func", default="rastrigin", help="test function to optimize")
     parser.add_argument("--n_dim", default=3, type=int, help="number of dimension")
     parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads"], help="method used in optimization")
