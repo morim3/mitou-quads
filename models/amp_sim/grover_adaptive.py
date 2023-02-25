@@ -3,10 +3,7 @@ from typing import Callable, List
 import numpy as np
 from numpy.typing import NDArray
 
-from models.amp_sim.sampler import sampling_grover_oracle
-
-def optimal_amplify_num(p):
-    return np.arccos(np.sqrt(p)) / 2 / np.arcsin(np.sqrt(p))
+from models.amp_sim.sampler import optimal_amplify_num, GroverSampler
 
 def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
     n_eval = 0
@@ -43,6 +40,8 @@ def run_grover_minimization(
 ):
 
     threshold: float = config["init_threshold"]
+    sampler = GroverSampler(func, config["n_digits"], config["n_dim"])
+
     eval_num_hist = []
     threshold_hist = []
     dist_target_hist = []
@@ -53,17 +52,17 @@ def run_grover_minimization(
     for i in range(config["max_iter"]):
 
         try:
-
             if config["sampler_type"] == "quantum":
-                x, y, eval_num = sampling_grover_oracle(
-                    func, None, None, config["n_digits"], dim, threshold, uniform=True, optimal_amplify_num=config["optimal_amplify_num"], 
-                    oracle_eval_limit=config["eval_limit_one_sample"]
+                xs, ys, eval_num = sampler.sample(
+                    None, None, threshold, n_samples=1, uniform=True,
+                    use_optimal_amplify=config["use_optimal_amplify"],
+                    oracle_eval_limit=config["eval_limit_per_update"]
                 )
+                x, y = xs[0, :], ys[0]
             elif config["sampler_type"] == "classical":
-                x, y, eval_num = uniform_sampling_classical(func, dim, threshold, config["eval_limit_one_sample"])
+                x, y, eval_num = uniform_sampling_classical(func, dim, threshold, config["eval_limit_per_update"])
             else:
                 raise ValueError("Invalid sampler type")
-
         except TimeoutError:
             break
 
@@ -74,20 +73,20 @@ def run_grover_minimization(
         dist_target_hist.append(dist_target)
 
         if verbose:
-            print("-------")
-            print("accepted", x)
-            print("accepted_val", y)
-            print("iter: ", i)
-            print("threshold: ", threshold)
-            print("eval_num: ", eval_num_hist[-1])
-            print("--------")
+            print(f"""\
+--- iter {i} -----------------
+accepted: {x}
+accepted_val: {y}
+threshold: {threshold}
+eval_num: {eval_num_hist[-1]}
+----------------------------""")
 
         if dist_target < config["terminate_eps"]:
             break
 
     if verbose:
         print("total_eval_num: ", sum(eval_num_hist))
-    return x, (np.array(threshold_hist), np.array(eval_num_hist), np.array(dist_target_hist))
+    return x, (np.array(threshold_hist), np.array(eval_num_hist), np.array(dist_target_hist), np.array(threshold_hist))
 
 
 if __name__ == "__main__":
@@ -103,8 +102,8 @@ if __name__ == "__main__":
         "n_digits": 8,
         "max_iter": 100,
         "terminate_eps": 0.01,
-        "eval_limit_one_sample": 10000,
-        "optimal_amplify_num": True,
+        "eval_limit_per_update": 10000,
+        "use_optimal_amplify": True,
     }
 
 

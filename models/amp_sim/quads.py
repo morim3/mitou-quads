@@ -4,11 +4,11 @@ from typing import Callable, List, Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from models.amp_sim.sampler import init_normal_state, sampling_grover_oracle
+from models.amp_sim.sampler import init_normal_state, optimal_amplify_num, GroverSampler
 from models.parameters import CMAHyperParam, CMAParam, QuadsParam, QuadsHyperParam, update_quads_params, get_normal_samples
 
 
-def get_samples_grover(func, quads_param: QuadsParam, config):
+def get_samples_grover(sampler: GroverSampler, quads_param: QuadsParam, config):
     accepted = []
     accepted_val = []
     mean = quads_param.cma_param.mean
@@ -16,22 +16,17 @@ def get_samples_grover(func, quads_param: QuadsParam, config):
     threshold = quads_param.threshold
 
     n_eval = 0
-    for _ in range(config["n_samples"]):
-        initial_state = init_normal_state(
-            config["n_digits"], mean, cov, config["n_dim"])
-        x, y, eval_num = sampling_grover_oracle(
-            func, mean, cov, config["n_digits"], config["n_dim"], threshold, optimal_amplify_num=config["optimal_amplify_num"], initial_state=initial_state, oracle_eval_limit=config["eval_limit_one_sample"])
+    initial_state = init_normal_state(
+        config["n_digits"], mean, cov, config["n_dim"])
+    accepted, accepted_val, eval_num = sampler.sample(
+        mean, cov, threshold, config["n_samples"],
+        use_optimal_amplify=config["use_optimal_amplify"],
+        initial_state=initial_state,
+        oracle_eval_limit=config["eval_limit_per_update"])
 
-        n_eval += eval_num
-
-        accepted.append(x)
-        accepted_val.append(y)
+    n_eval += eval_num
 
     return np.array(accepted), np.array(accepted_val).squeeze(), n_eval
-
-
-def optimal_amplify_num(p):
-    return np.arccos(np.sqrt(p)) / 2 / np.arcsin(np.sqrt(p))
 
 def get_samples_classical(func, quads_param:QuadsParam, config):
     n_sampled = 0
@@ -63,8 +58,8 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
         accepted_val = np.concatenate([accepted_val, func_val[accept_flag]])
 
 
-        if n_eval > config["eval_limit_one_sample"]:
-            raise TimeoutError
+    if n_eval > config["eval_limit_per_update"]:
+        raise TimeoutError
 
     p = n_samples / n_eval
     n_eval_estimated = (optimal_amplify_num(p) + 1) * n_samples
@@ -72,15 +67,12 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
     return accepted, accepted_val, n_eval_estimated
 
 
-def run_quads(
-    func: Callable[[NDArray], NDArray],
-    init_param: QuadsParam,
-    config,
-    verbose=False
-):
-
+def run_quads(func: Callable[[NDArray], NDArray], config, verbose=False):
+    init_param = QuadsParam(
+        config["init_threshold"], CMAParam(config["init_mean"], config["init_cov"], config["init_step_size"] ))
     hp = QuadsHyperParam(quantile=config["quantile"], smoothing_th=config["smoothing_th"], 
                          cma_hyperparam=CMAHyperParam(config["n_dim"], config["n_samples"], ))
+    sampler = GroverSampler(func, config["n_digits"], config["n_dim"])
 
     quads_param = init_param
     eval_num_hist = []
@@ -95,7 +87,7 @@ def run_quads(
         try:
             if config["sampler_type"] == "quantum":
                 accepted, accepted_val, n_eval = get_samples_grover(
-                    func, quads_param, config)
+                    sampler, quads_param, config)
             elif config["sampler_type"] == "classical":
                 accepted, accepted_val, n_eval = get_samples_classical(
                     func, quads_param, config)
@@ -119,21 +111,22 @@ def run_quads(
         eval_num_hist.append(n_eval)
 
         if verbose:
-            print("-------")
-            print("accepted", accepted)
-            print("accepted_val", accepted_val)
-            print("iter: ", i)
-            print("updated mu: ", quads_param.cma_param.mean)
-            print("cov: ", quads_param.cma_param.cov)
-            print("step_size: ", quads_param.cma_param.step_size)
-            print("threshold: ", quads_param.threshold)
-            print("eval_num: ", eval_num_hist[-1])
-            print("--------")
-
+            print(f"""\
+--- iter {i} -----------------
+accepted: {accepted}
+accepted_val: {accepted_val}
+updated mu: {quads_param.cma_param.mean}
+cov: {quads_param.cma_param.cov}
+step_size: {quads_param.cma_param.step_size}
+threshold: {quads_param.threshold}
+eval_num: {eval_num_hist[-1]}
+----------------------------""")
+                  
         if dist_target < config["terminate_eps"] or quads_param.cma_param.step_size < config["terminate_step_size"]:
             break
 
-    print("total_eval_num: ", sum(eval_num_hist))
+    if verbose:
+        print("total_eval_num: ", sum(eval_num_hist))
     return quads_param, (np.array(min_func_hist),np.array(eval_num_hist), np.array(dist_target_hist), param_hist )
 
 
@@ -157,7 +150,7 @@ if __name__ == "__main__":
         "quantile": 0.1,
         "smoothing_th": 0.5,
         "target": target,
-        "eval_limit_one_sample": 10000
+        "eval_limit_per_update": 10000
     }
 
     def func(x):
