@@ -220,7 +220,7 @@ def main(args):
     print(f"config: {config}")
  
     with wandb.init(
-        project="mitou-quads",
+        project=args.project_name,
         config=config,
         mode="disabled" if args.test else "online",
         tags=[args.func, args.method, args.sampler_type] 
@@ -249,6 +249,7 @@ def main(args):
 if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
+    parser.add_argument("--project_name", default="mitou-quads")
     parser.add_argument("--func", default="rastrigin", help="test function to optimize")
     parser.add_argument("--n_dim", default=3, type=int, help="number of dimension")
     parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads"], help="method used in optimization")
