@@ -5,6 +5,7 @@ from numpy.typing import NDArray
 
 from models.amp_sim.sampler import optimal_amplify_num, GroverSampler
 
+
 def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
     n_eval = 0
 
@@ -40,7 +41,8 @@ def run_grover_minimization(
 ):
 
     threshold: float = config["init_threshold"]
-    sampler = GroverSampler(func, config["n_digits"], config["n_dim"])
+    if config["sampler_type"] == "quantum":
+        sampler = GroverSampler(func, config["n_digits"], config["n_dim"])
 
     eval_num_hist = []
     threshold_hist = []
@@ -60,7 +62,8 @@ def run_grover_minimization(
                 )
                 x, y = xs[0, :], ys[0]
             elif config["sampler_type"] == "classical":
-                x, y, eval_num = uniform_sampling_classical(func, dim, threshold, config["eval_limit_per_update"])
+                x, y, eval_num = uniform_sampling_classical(
+                    func, dim, threshold, config["eval_limit_per_update"])
             else:
                 raise ValueError("Invalid sampler type")
         except TimeoutError:
@@ -105,7 +108,6 @@ if __name__ == "__main__":
         "eval_limit_per_update": 10000,
         "use_optimal_amplify": True,
     }
-
 
     def func(x): return (20 + (10*(x[..., 0]-target[0])) ** 2 + (10*(x[..., 1]-target[1])) ** 2 - 10 * np.cos(
         2*np.pi*(10*(x[..., 0]-target[0]))) - 10 * np.cos(2*np.pi*(10*(x[..., 1]-target[1])))) / 40

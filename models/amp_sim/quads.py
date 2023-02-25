@@ -39,7 +39,7 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
     BD = np.matmul(B, np.diag(diagD))
     n_samples = config["n_samples"]
     while n_sampled < n_samples:
-        n_parallel = 100
+        n_parallel = 1000
         sample = get_normal_samples(quads_param.cma_param, config["n_dim"], n_parallel, BD=BD)
 
         func_val = func(sample)
@@ -58,8 +58,8 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
         accepted_val = np.concatenate([accepted_val, func_val[accept_flag]])
 
 
-    if n_eval > config["eval_limit_per_update"]:
-        raise TimeoutError
+        if n_eval > config["eval_limit_per_update"]:
+            raise TimeoutError
 
     p = n_samples / n_eval
     n_eval_estimated = (optimal_amplify_num(p) + 1) * n_samples
@@ -72,7 +72,9 @@ def run_quads(func: Callable[[NDArray], NDArray], config, verbose=False):
         config["init_threshold"], CMAParam(config["init_mean"], config["init_cov"], config["init_step_size"] ))
     hp = QuadsHyperParam(quantile=config["quantile"], smoothing_th=config["smoothing_th"], 
                          cma_hyperparam=CMAHyperParam(config["n_dim"], config["n_samples"], ))
-    sampler = GroverSampler(func, config["n_digits"], config["n_dim"])
+
+    if config["sampler_type"] == "quantum":
+        sampler = GroverSampler(func, config["n_digits"], config["n_dim"])
 
     quads_param = init_param
     eval_num_hist = []
