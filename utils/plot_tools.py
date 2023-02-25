@@ -2,18 +2,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_function_surface(func, target=None, func_name="", ax=None):
-    X, Y = np.meshgrid(np.linspace(0, 1, 500), np.linspace(0, 1, 500))
+def plot_function_surface(func, target=None, func_name="", init_mu=None, ax=None):
+    grid_num = 500
+    X, Y = np.meshgrid(np.linspace(0, 1, grid_num), np.linspace(0, 1, grid_num))
     grid = np.stack([X, Y], axis=-1).reshape((-1, 2))
     func_value = func(grid).reshape((500, 500))
     if ax is None:
-        fig, ax = plt.subplots(dpi=300)
+        fig, ax = plt.subplots(dpi=100)
+    # ax.imshow(func_value)
     ax.imshow(func_value)
-    ax.set_title(f"{func_name} function")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.scatter([target[0]], [target[1]], marker='*', s=1)
-    return ax
+    ax.scatter([target[0]*grid_num], [target[1]*grid_num], marker='*', s=10, c="red")
+    ax.scatter([init_mu[0]*grid_num], [init_mu[1]*grid_num], marker='.', s=10, c="orange")
+    return fig
 
 def plot_optimization_dynamics(eval_hists, min_val_hists, ax=None):
     if ax is None:
