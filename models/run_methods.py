@@ -9,6 +9,7 @@ from models.parameters import QuadsParam, CMAParam
 from utils.objective_functions import objective_functions
 from utils.plot_tools import plot_function_surface
 from typing import Callable
+import os
 
 def get_sample_size(dim):
     return int(4+np.log(dim)*3)
@@ -83,8 +84,7 @@ def wandb_log(result):
 
     opt_process = [[i, x, y] for i in range(len(eval_hists)) for (x, y) in zip(eval_hists[i], min_func_hists[i]) ]
     table = wandb.Table(data=opt_process, columns = ["trial", "x", "y"])
-    wandb.log({"optimization process" : wandb.plot.line(table, "x", "y",
-               title="Optimization Process")})
+    wandb.log({"optimization process" : table})
 
 def run_trials(func, config):
     eval_hists = []
@@ -171,10 +171,11 @@ def main(args):
         result = results_postprocess(result, config)
         wandb_log(result)
 
-        with artifact.new_file(f"result.pickle", mode='wb') as f:
+        save_path = os.path.join(wandb.run.dir, "result.pickle")
+        with open(save_path, mode='wb') as f:
             pickle.dump(result, f)
 
-        wandb.log_artifact(artifact)
+        wandb.save(save_path)
 
 
 if __name__ == "__main__":
