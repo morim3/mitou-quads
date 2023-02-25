@@ -166,7 +166,7 @@ def main(args):
         
         artifact = wandb.Artifact("experiment-result", type="result")
 
-        wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), args.func)})
+        wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), func_name=args.func, init_mu=init_mean)})
         result = run_trials(func, config)
         result = results_postprocess(result, config)
         wandb_log(result)
