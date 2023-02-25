@@ -6,12 +6,9 @@ import wandb
 from models.amp_sim import quads, grover_adaptive
 from models.classical import cmaes
 from models.parameters import QuadsParam, CMAParam
-from utils import objective_functions
+from utils.objective_functions import objective_functions
+from utils.plot_tools import plot_function_surface
 from typing import Callable
-
-def get_objective_function(name: str, **kwargs) -> tuple[Callable[[NDArray], NDArray], NDArray]:
-    # return (func, target)
-    return objective_functions.__getattribute__(f"get_{name}")(**kwargs)
 
 def get_sample_size(dim):
     return int(4+np.log(dim)*3)
@@ -100,27 +97,12 @@ def run_trials(func, config):
         "converged_to_global": converged_to_global
     }
 
-def log_function_shape(func_name, ):
-    import matplotlib.pyplot as plt
-    func, target = objective_functions.__getattribute__(f"get_{func_name}")(dim=2, )
-
-    X, Y = np.meshgrid(np.linspace(0, 1, 500), np.linspace(0, 1, 500))
-    grid = np.stack([X, Y], axis=-1).reshape((-1, 2))
-    func_value = func(grid).reshape((500, 500))
-    fig, ax = plt.subplots(dpi=500)
-    ax.imshow(func_value)
-    ax.set_title(f"{func_name} function")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.scatter([target[0]], [target[1]], marker='*', s=1)
-
-    wandb.log({"func": fig})
 
 def main(args):
 
     n_dim = args.n_dim
 
-    func, target = get_objective_function(args.func, dim=n_dim)
+    func, target = objective_functions[args.func](dim=n_dim)
     assert n_dim == target.shape[-1]
 
     init_mean = args.init_normal_mean
@@ -160,8 +142,8 @@ def main(args):
     ) as wandb_run:
         
         artifact = wandb.Artifact("experiment-result", type="result")
-        
-        log_function_shape(args.func, )
+
+        wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), args.func)})
 
         result = run_trials(func, config)
         wandb_log(**result)

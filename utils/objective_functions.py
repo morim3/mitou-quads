@@ -70,3 +70,13 @@ def get_griewank(dim=3, target=None):
 
 def rosenbrock(x):
     return np.sum((x[:, 1:] - x[:, :-1] ** 2) ** 2 * 100 + (1 - x[:, :-1])**2)
+
+objective_functions = {
+    "rastrigin": get_rastrigin,
+    "ackley": get_ackley,
+    "squared": get_squared,
+    "styblinski_tang": get_styblinski_tang,
+    "easom": get_easom,
+    "schwefel": get_schwefel,
+    "griewank": get_griewank
+}
