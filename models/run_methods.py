@@ -156,6 +156,7 @@ def main(args):
  
     with wandb.init(
         project=args.project_name,
+        name=args.name,
         config=config,
         mode="disabled" if args.test else "online",
         tags=[args.func, args.method, args.sampler_type] 
@@ -178,6 +179,7 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("--project_name")
+    parser.add_argument("--name", default=None)
     parser.add_argument("--func", default="rastrigin", help="test function to optimize")
     parser.add_argument("--n_dim", default=3, type=int, help="number of dimension")
     parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads"], help="method used in optimization")
