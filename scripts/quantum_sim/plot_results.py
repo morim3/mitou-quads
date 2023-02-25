@@ -98,6 +98,7 @@ def eval_to_func_val(experiments):
                 handles_marker[exp_id] = ax.scatter(
                     [eval_hists[i][-1]], [min_func_hists[i][-1]],
                     edgecolors=["black"], c=[[r, g, b]], s=60, alpha=0.7,
+                    # marker=data["marker"],
                     marker="d" if data["converged_to_global"][i] else "o",
                     zorder=100_000 + e["zorder"], clip_on=False)
 
