@@ -102,6 +102,12 @@ def run_trials(func, config):
         method = quads.run_quads
     
     def run_trial(func, method, config):
+        init_mean = np.random.rand(config["n_dim"])
+        init_threshold = func(init_mean)
+        config.update({
+            "init_mean": init_mean,
+            "init_threshold": init_threshold,
+        })
         _, (min_func_hist, eval_num_hist, dist_target_hist, param_hists) = method(func, config, verbose=config["verbose"])
         eval_num_hist = np.cumsum(eval_num_hist)
         eval_total = eval_num_hist[-1]
@@ -110,7 +116,7 @@ def run_trials(func, config):
 
     min_func_hists, eval_hists, dist_target_hists, eval_total, converged_to_global = zip(
         *joblib.Parallel(n_jobs=config["n_jobs"], prefer="threads", verbose=10)(
-            joblib.delayed(run_trial)(func, method, config) for _ in range(config["n_trial"]))
+            joblib.delayed(run_trial)(func, method, config.copy()) for _ in range(config["n_trial"]))
     )
 
     return {
@@ -128,11 +134,8 @@ def main(args):
     func, target = objective_functions[args.func](dim=n_dim)
     assert n_dim == target.shape[-1]
 
-    init_mean = np.random.rand(n_dim)
-    assert n_dim == init_mean.shape[-1]
 
     init_cov = np.identity(n_dim) * args.init_normal_std
-    init_threshold = func(init_mean)
 
     if args.method == "grover":
         n_samples = None
@@ -147,9 +150,7 @@ def main(args):
     config.update({
         "n_samples": n_samples,
         "target": target,
-        "init_mean": init_mean,
         "init_cov": init_cov,
-        "init_threshold": init_threshold,
     })
 
     print(f"config: {config}")
@@ -164,7 +165,7 @@ def main(args):
         tags=[args.func, args.method, args.sampler_type] 
     ) as wandb_run:
         
-        wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), func_name=args.func, init_mu=init_mean)})
+        wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), func_name=args.func, )})
         result = run_trials(func, config)
         result = results_postprocess(result, config)
         wandb_log(result)
