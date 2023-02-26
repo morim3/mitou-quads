@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_function_surface(func, target=None, func_name="", init_mu=None, ax=None):
+def plot_function_surface(func, target=None, func_name="", ax=None):
     grid_num = 500
     X, Y = np.meshgrid(np.linspace(0, 1, grid_num), np.linspace(0, 1, grid_num))
     grid = np.stack([X, Y], axis=-1).reshape((-1, 2))
@@ -12,7 +12,6 @@ def plot_function_surface(func, target=None, func_name="", init_mu=None, ax=None
     # ax.imshow(func_value)
     ax.imshow(func_value)
     ax.scatter([target[0]*grid_num], [target[1]*grid_num], marker='*', s=10, c="red")
-    ax.scatter([init_mu[0]*grid_num], [init_mu[1]*grid_num], marker='.', s=10, c="orange")
     return fig
 
 def plot_optimization_dynamics(eval_hists, min_func_hists, ax=None):
