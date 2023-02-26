@@ -128,10 +128,7 @@ def main(args):
     func, target = objective_functions[args.func](dim=n_dim)
     assert n_dim == target.shape[-1]
 
-    init_mean = args.init_normal_mean
-    if len(init_mean) == 1:
-        init_mean = init_mean * n_dim
-    init_mean = np.array(init_mean)
+    init_mean = np.random.rand(n_dim)
     assert n_dim == init_mean.shape[-1]
 
     init_cov = np.identity(n_dim) * args.init_normal_std
@@ -206,7 +203,6 @@ if __name__ == "__main__":
     parser.add_argument("--smoothing_th", default=0.5, type=np.float32)
     parser.add_argument("--use_optimal_amplify", default=False, type=bool)
     parser.add_argument("--eval_limit_per_update", default=10000, type=int)
-    parser.add_argument('--init_normal_mean', nargs='+', type=np.float32, default=[0.8])
     parser.add_argument('--init_normal_std', type=np.float32, default=1)
     parser.add_argument('--init_step_size', type=np.float32, default=0.5)
     args = parser.parse_args()
