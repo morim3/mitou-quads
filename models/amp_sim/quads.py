@@ -39,7 +39,7 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
     BD = np.matmul(B, np.diag(diagD))
     n_samples = config["n_samples"]
     while n_sampled < n_samples:
-        n_parallel = 100000
+        n_parallel = 10
         sample = get_normal_samples(quads_param.cma_param, config["n_dim"], n_parallel, BD=BD)
 
         func_val = func(sample)
@@ -65,7 +65,6 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
     n_eval_estimated = (optimal_amplify_num(p) + 1) * n_samples
 
     return accepted, accepted_val, n_eval_estimated
-
 
 def run_quads(func: Callable[[NDArray], NDArray], config, verbose=False):
     init_param = QuadsParam(

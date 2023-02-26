@@ -114,10 +114,14 @@ def run_trials(func, config):
         converged_to_global = dist_target_hist[-1] < config["terminate_eps"]
         return min_func_hist, eval_num_hist, dist_target_hist, eval_total, converged_to_global
 
-    min_func_hists, eval_hists, dist_target_hists, eval_total, converged_to_global = zip(
-        *joblib.Parallel(n_jobs=config["n_jobs"], prefer="threads", verbose=10)(
-            joblib.delayed(run_trial)(func, method, config.copy()) for _ in range(config["n_trial"]))
-    )
+    if config["n_jobs"] > 1:
+        min_func_hists, eval_hists, dist_target_hists, eval_total, converged_to_global = zip(
+            *joblib.Parallel(n_jobs=config["n_jobs"], verbose=10)(
+                [joblib.delayed(run_trial)(func, method, config.copy()) for _ in range(config["n_trial"])])
+        )
+    else:
+        min_func_hists, eval_hists, dist_target_hists, eval_total, converged_to_global = zip(
+            * [run_trial(func, method, config.copy()) for _ in range(config["n_trial"])])
 
     return {
         "eval_hists": eval_hists,
