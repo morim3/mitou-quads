@@ -39,7 +39,7 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
     BD = np.matmul(B, np.diag(diagD))
     n_samples = config["n_samples"]
     while n_sampled < n_samples:
-        n_parallel = 1000
+        n_parallel = 100000
         sample = get_normal_samples(quads_param.cma_param, config["n_dim"], n_parallel, BD=BD)
 
         func_val = func(sample)
