@@ -14,18 +14,15 @@ plt.rcParams["font.size"] = 15
 
 color = [hsv_to_rgb((260.0/360.0, 0.5, 0.85)), hsv_to_rgb((120.0 / 360.0, 0.5, 0.7)), hsv_to_rgb((30.0/360.0, 0.5, 0.95))]
 
-def load_experiments(api, entity, func, versions={
-        "grover": "latest",
-        "cmaes": "latest", 
-        "quads": "latest"}):
+def load_experiments(entity, run_ids):
 
-    prefix = f"{entity}/mitou-quads"
+    prefix = f"{entity}/mitou-quads-quantum"
     experiments = []
 
     def get_result(method):
-        artifact = api.artifact(
-            f"{prefix}/result-quantum-{method}-{func}:{versions[method]}")
-        return f"{artifact.download()}/result.pickle"
+        run_path = f"{prefix}/{run_ids[method]}"
+        file_path = wandb.restore('result.pickle', replace=True, run_path=run_path)
+        return file_path.name
 
     with open(get_result("grover"), mode='rb') as f:
         experiments.append({
@@ -55,6 +52,7 @@ def load_experiments(api, entity, func, versions={
             "marker": "s",
             "color": hsv_to_rgb((30.0/360.0, 0.5, 0.95)),
         })
+    print(experiments)
 
     return experiments
 
@@ -66,8 +64,8 @@ def eval_to_func_val(experiments):
 
     ax = axes[0]
 
-    ax.set_ylim(1e-3, 10)
-    ax.set_xlim(0, 3000)
+    # ax.set_ylim(1e-3, 10)
+    ax.set_xlim(0, 2000)
 
     draw_all_terminal = True
 
@@ -121,8 +119,6 @@ def eval_to_func_val(experiments):
         min_func_hists = [m[1:] for m in data["min_func_hists"]]
         eval_sums = [e[-1] for e in data["eval_hists"]]
         final_min_vals = [m[-1] for m in data["min_func_hists"]]
-
-        print(data["converged_to_global"])
 
         good_eval_sums = [e for e, c in zip(eval_sums, data["converged_to_global"]) if c]
 
@@ -191,21 +187,16 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--entity", type=str)
-    parser.add_argument("--func", type=str, default="rastrigin")
-    parser.add_argument("--v_quads", type=str, default="latest")
-    parser.add_argument("--v_grover", type=str, default="latest")
-    parser.add_argument("--v_cmaes", type=str, default="latest")
-    # parser.add_argument("--output")
+    parser.add_argument("--quads_id", type=str, )
+    parser.add_argument("--grover_id", type=str,)
+    parser.add_argument("--cmaes_id", type=str,)
+    parser.add_argument("--output")
     args = parser.parse_args()
 
     api = wandb.Api()
 
-    experiments = load_experiments(api, args.entity, args.func, versions={
-        "grover": args.v_grover,
-        "cmaes": args.v_cmaes,
-        "quads": args.v_quads
-    })
+    experiments = load_experiments(args.entity, {"quads": args.quads_id, "grover": args.grover_id, "cmaes": args.cmaes_id})
 
     fig, axes = eval_to_func_val(experiments)
-    plt.savefig("outputs/fig1.pdf")
+    plt.savefig(args.output)
 
