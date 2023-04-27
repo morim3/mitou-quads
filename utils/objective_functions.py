@@ -1,16 +1,18 @@
-import numpy as np
+import importlib
 
-def get_rastrigin(dim=3, target=None, square_term=1, ):
+def get_rastrigin(dim=3, target=None, square_term=1, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
     if target is None:
         target = np.ones(dim, dtype=np.float32) * 0.5
 
     def fun(x,):
         x = (x-target[None]) * 10.24
-        return np.sum(square_term * x ** 2 +
-            10 * (1 - np.cos(2 * np.pi * x)), axis=-1)
+        return np.sum(square_term * x ** 2.0 +
+            10.0 * (1.0 - np.cos(2.0 * np.pi * x)), axis=-1)
     return fun, target
 
-def get_ackley(dim=3, target=None):
+def get_ackley(dim=3, target=None, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
     if target is None:
         target = np.ones(dim, dtype=np.float32) * 0.5
 
@@ -20,14 +22,16 @@ def get_ackley(dim=3, target=None):
 
     return fun, target
 
-def get_squared(dim=3, target=None, square_term=1):
+def get_squared(dim=3, target=None, square_term=1, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
     if target is None:
         target = np.ones(dim, dtype=np.float32)*0.75
     def squared(x):
         return  square_term * np.sum((x - target[..., :]) ** 2, axis=-1)
     return squared, target
 
-def get_styblinski_tang(dim=3, target=None):
+def get_styblinski_tang(dim=3, target=None, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
 
     target = np.array([-2.90353402777118 / 10 + 0.5] * dim, dtype=np.float32)
 
@@ -43,7 +47,8 @@ def get_styblinski_tang(dim=3, target=None):
         return base_fun(y) - base_fun(optimal_point)
     return styblinski_tang, target
 
-def get_easom(dim=2, target=None):
+def get_easom(dim=2, target=None, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
     target = np.array([(np.pi+100)/200, (np.pi+100)/200], dtype=np.float32)
     def fun(x):
         x = x * 200 - 100
@@ -51,7 +56,8 @@ def get_easom(dim=2, target=None):
         
     return fun, target
 
-def get_schwefel(dim=3, target=None):
+def get_schwefel(dim=3, target=None, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
     target = (np.ones(dim, dtype=np.float32)*420.9687 + 500) / 1000
     def fun(x):
         x = x * 1000 -500
@@ -59,7 +65,8 @@ def get_schwefel(dim=3, target=None):
 
     return fun, target
 
-def get_griewank(dim=3, target=None):
+def get_griewank(dim=3, target=None, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
     if target is None:
         target = np.ones(dim, dtype=np.float32) * 0.5
     def fun(x):
@@ -68,7 +75,8 @@ def get_griewank(dim=3, target=None):
 
     return fun, target
 
-def rosenbrock(x):
+def rosenbrock(x, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
     return np.sum((x[:, 1:] - x[:, :-1] ** 2) ** 2 * 100 + (1 - x[:, :-1])**2)
 
 objective_functions = {
