@@ -5,9 +5,10 @@ from tqdm import tqdm
 import joblib
 import wandb
 from models.amp_sim import quads, grover_adaptive
+from models.etc import gradients
 from models.classical import cmaes
 from models.parameters import QuadsParam, CMAParam
-from utils.objective_functions import objective_functions
+# from utils.objective_functions import objective_functions
 from utils.plot_tools import plot_function_surface
 from typing import Callable
 import os
@@ -100,6 +101,8 @@ def run_trials(func, config):
         method = cmaes.run_cmaes
     elif args.method == "quads":
         method = quads.run_quads
+    elif args.method == "adam":
+        method = gradients.run_adam
     
     def run_trial(func, method, config):
         init_mean = np.random.rand(config["n_dim"])
@@ -134,12 +137,14 @@ def run_trials(func, config):
 def main(args):
 
     n_dim = args.n_dim
-
-    func, target = objective_functions[args.func](dim=n_dim)
+    from utils.objective_functions import objective_functions
+    func, target = objective_functions[args.func](dim=n_dim, use_jax=args.method=="adam")
     assert n_dim == target.shape[-1]
 
 
     init_cov = np.identity(n_dim) * args.init_normal_std
+
+    config = {}
 
     if args.method == "grover":
         n_samples = None
@@ -148,8 +153,14 @@ def main(args):
     elif args.method == "quads":
         # good sample in cmaes is half better samples
         n_samples = int(get_sample_size(n_dim) / 2 + 1)
+    elif args.method == "adam":
+        n_samples = None
+        config.update({
+            "beta1": 0.9,
+            "beta2": 0.999
+        })
     
-    config = vars(args)
+    config.update(vars(args))
 
     config.update({
         "n_samples": n_samples,
@@ -190,7 +201,7 @@ if __name__ == "__main__":
     parser.add_argument("--entity", default=None)
     parser.add_argument("--func", default="rastrigin", help="test function to optimize")
     parser.add_argument("--n_dim", default=3, type=int, help="number of dimension")
-    parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads"], help="method used in optimization")
+    parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads", "adam"], help="method used in optimization")
     parser.add_argument("--sampler_type", default="quantum", choices=["quantum", "classical"],
                         help="type of sampler (quantum: sample by quantum simulator, classical: sample by classical algorithm)")
     parser.add_argument("--n_digits", default=8, type=int,
