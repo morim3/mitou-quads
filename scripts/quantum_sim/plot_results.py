@@ -26,7 +26,7 @@ def load_experiments(entity, run_ids):
 
     with open(get_result("grover"), mode='rb') as f:
         experiments.append({
-            "name": "グローバー適応探索",
+            "name": "GAS",
             "data": pickle.load(f),
             "zorder": 10000,
             "marker": "d",
@@ -46,13 +46,13 @@ def load_experiments(entity, run_ids):
         proposed_quantum = pickle.load(f)
         # proposed_quantum["min_func_hists"] = [m[1:] for m in proposed_quantum["min_func_hists"]]
         experiments.append({
-            "name": "QuADS(提案手法)",
+            "name": "QuADS",
             "data": proposed_quantum,
             "zorder": 20000,
             "marker": "s",
             "color": hsv_to_rgb((30.0/360.0, 0.5, 0.95)),
         })
-    print(experiments)
+    # print(experiments)
 
     return experiments
 
@@ -87,7 +87,7 @@ def eval_to_func_val(experiments):
         for i in range(len(eval_hists)):
             r, g, b = [*e["color"]]
             handles_tragectory[exp_id], = ax.plot(
-                eval_hists[i], min_func_hists[i], c=[r, g, b, 0.1], zorder=e["zorder"] + i, lw=4)
+                eval_hists[i], min_func_hists[i], c=[r, g, b, 0.4], zorder=e["zorder"] + i, lw=1)
 
             # if min_func_hists[i][-1] <= global_threshold:
             #     min_func_hists[i][-1] *= (0.88) ** (exp_id + 1)
@@ -143,45 +143,25 @@ def eval_to_func_val(experiments):
         handler_map={tuple: HandlerTuple(ndivide=None)},
         fontsize=9, loc="upper right", bbox_to_anchor=(0.9, 0.88))
 
-    axes[0].set_xlabel("関数評価回数")
-    axes[0].set_ylabel("\n".join("関数評価値"), rotation=0, loc="center")
+    axes[0].set_xlabel("oracle calls")
+    axes[0].set_ylabel("function value")
+    # axes[0].set_xlabel("関数評価回数")
+    # axes[0].set_ylabel("\n".join("関数評価値"), rotation=0, loc="center")
     axes[0].yaxis.set_label_coords(-0.09, 0.4)
 
     axes[1].legend([tuple(handles_all), tuple(handles_good)],
-        ["収束全体", "大域的収束"],
+        ["convergence", "convergence to global optimal"],
         handler_map={tuple: HandlerTuple(ndivide=None)},
         fontsize=9, loc="lower right", bbox_to_anchor=(0.9, 0.1),
         handlelength = 8)
 
-    axes[1].set_xlabel("関数評価回数")
-    axes[1].set_ylabel("\n".join("サンプル割合"), rotation=0, loc="center")
+    axes[1].set_xlabel("oracle calls")
+    axes[1].set_ylabel("convergence rate")
     axes[1].yaxis.set_label_coords(-0.09, 0.4)
     fig.tight_layout()
     return fig, axes
 
 
-# def eval_to_converge(results):
-#     fig, ax = plt.subplots(figsize=(8, 4.5))
-#
-#     for exp_id, (name, (summary, table)) in enumerate(results.items()):
-#
-#         handle_all, = ax.plot(eval_sums, eval_sums_y, c=e["color"], lw=2, ls="dashed", dashes=[1.5,1.0])
-#         handle_good, = ax.plot(good_eval_sums, good_eval_sums_y, c=e["color"], lw=2, ls="solid")
-#
-#     ax.set_xlabel("関数評価回数")
-#     ax.set_ylabel("\n".join("関数評価値"), rotation=0, loc="center")
-#     ax.yaxis.set_label_coords(-0.09, 0.4)
-#
-#     ax.legend([tuple(handles_all), tuple(handles_good)],
-#         ["収束全体", "大域的収束"],
-#         handler_map={tuple: HandlerTuple(ndivide=None)},
-#         fontsize=9, loc="lower right", bbox_to_anchor=(0.9, 0.1),
-#         handlelength = 8)
-#
-#     ax.set_xlabel("関数評価回数")
-#     ax.set_ylabel("\n".join("サンプル割合"), rotation=0, loc="center")
-#     ax.yaxis.set_label_coords(-0.09, 0.4)
-#     fig.tight_layout()
 
 if __name__ == '__main__':
     import argparse
