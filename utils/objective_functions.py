@@ -75,9 +75,27 @@ def get_griewank(dim=3, target=None, use_jax=False):
 
     return fun, target
 
-def rosenbrock(x, use_jax=False):
+def get_rosenbrock(dim=3, target=None, use_jax=False):
     np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
-    return np.sum((x[:, 1:] - x[:, :-1] ** 2) ** 2 * 100 + (1 - x[:, :-1])**2)
+    target = np.ones(dim, dtype=np.float32) * 0.6
+
+    def rosenbrock(x):
+        x = x * 10. - 5.
+        return np.sum((x[:, 1:] - x[:, :-1] ** 2) ** 2 * 100 + (1 - x[:, :-1])**2, axis=-1)
+    
+    return rosenbrock, target
+
+def get_xin_she_yang(dim=3, target=None, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
+    if target is None:
+        target = np.ones(dim, dtype=np.float32) * 0.5
+
+    def fun(x):
+        x = (x-target[None]) * 4 * np.pi
+        return np.sum(np.abs(x), axis=-1) * np.exp(-np.sum(x**2, axis=-1))
+    return fun, target
+
+
 
 objective_functions = {
     "rastrigin": get_rastrigin,
@@ -86,5 +104,7 @@ objective_functions = {
     "styblinski_tang": get_styblinski_tang,
     "easom": get_easom,
     "schwefel": get_schwefel,
-    "griewank": get_griewank
+    "griewank": get_griewank,
+    "rosenbrock": get_rosenbrock,
+    "xin_she_yang": get_xin_she_yang,
 }
