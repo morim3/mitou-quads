@@ -1,12 +1,7 @@
 
-from typing import Callable, List
-
 import jax
 import jax.numpy as jnp
 import numpy as np
-from numpy.typing import NDArray
-
-from models.amp_sim.sampler import optimal_amplify_num, GroverSampler
 
 def run_adam(func, config, verbose=False):
 
