@@ -14,14 +14,18 @@ plt.rcParams["font.size"] = 15
 
 color = [hsv_to_rgb((260.0/360.0, 0.5, 0.85)), hsv_to_rgb((120.0 / 360.0, 0.5, 0.7)), hsv_to_rgb((30.0/360.0, 0.5, 0.95))]
 
-def load_experiments(entity, run_ids):
+def load_experiments(entity, func, dim):
 
     prefix = f"{entity}/mitou-quads-quantum"
     experiments = []
 
     def get_result(method):
-        run_path = f"{prefix}/{run_ids[method]}"
-        file_path = wandb.restore('result.pickle', replace=True, run_path=run_path)
+        print(func, method, dim)
+        run = wandb.Api().runs(
+             path=prefix,
+             filters={"config.func": func, "config.method": method, "config.n_dim": dim}
+        )[0]
+        file_path = wandb.restore('result.pickle', replace=True, run_path=prefix+"/"+run.path[-1])
         return file_path.name
 
     with open(get_result("grover"), mode='rb') as f:
@@ -44,7 +48,6 @@ def load_experiments(entity, run_ids):
 
     with open(get_result("quads"), mode='rb') as f:
         proposed_quantum = pickle.load(f)
-        # proposed_quantum["min_func_hists"] = [m[1:] for m in proposed_quantum["min_func_hists"]]
         experiments.append({
             "name": "QuADS",
             "data": proposed_quantum,
@@ -167,15 +170,14 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--entity", type=str)
-    parser.add_argument("--quads_id", type=str, )
-    parser.add_argument("--grover_id", type=str,)
-    parser.add_argument("--cmaes_id", type=str,)
+    parser.add_argument("--func", type=str, )
+    parser.add_argument("--dim", type=int, )
     parser.add_argument("--output")
     args = parser.parse_args()
 
     api = wandb.Api()
 
-    experiments = load_experiments(args.entity, {"quads": args.quads_id, "grover": args.grover_id, "cmaes": args.cmaes_id})
+    experiments = load_experiments(args.entity, args.func, args.dim)
 
     fig, axes = eval_to_func_val(experiments)
     plt.savefig(args.output)
