@@ -81,7 +81,7 @@ def get_rosenbrock(dim=3, target=None, use_jax=False):
 
     def rosenbrock(x):
         x = x * 10. - 5.
-        return np.sum((x[:, 1:] - x[:, :-1] ** 2) ** 2 * 100 + (1 - x[:, :-1])**2, axis=-1)
+        return np.sum((x[..., 1:] - x[..., :-1] ** 2) ** 2 * 100 + (1 - x[..., :-1])**2, axis=-1)
     
     return rosenbrock, target
 
