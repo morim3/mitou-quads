@@ -181,6 +181,7 @@ def main(args):
     ) as wandb_run:
         
         wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), func_name=args.func, )})
+        print("start trials")
         result = run_trials(func, config)
         result = results_postprocess(result, config)
         wandb_log(result)

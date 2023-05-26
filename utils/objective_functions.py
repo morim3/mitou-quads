@@ -7,8 +7,7 @@ def get_rastrigin(dim=3, target=None, square_term=1, use_jax=False):
 
     def fun(x,):
         x = (x-target[None]) * 10.24
-        return np.sum(square_term * x ** 2.0 +
-            10.0 * (1.0 - np.cos(2.0 * np.pi * x)), axis=-1)
+        return np.sum(square_term * x ** 2.0, axis=-1) + np.sum(10.0 * (1.0 - np.cos(2.0 * np.pi * x)), axis=-1)
     return fun, target
 
 def get_ackley(dim=3, target=None, use_jax=False):
