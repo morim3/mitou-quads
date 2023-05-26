@@ -170,6 +170,7 @@ class GroverSampler:
                 xs.append(x)
                 ys.append(y)
                 amplify_num = 0
+                now_amplify = 0
 
             if oracle_eval_limit is not None and oracle_eval_limit < oracle_eval_num:
                 raise TimeoutError("Oracle evaluate limit exceeded.")
