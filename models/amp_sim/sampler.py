@@ -91,7 +91,7 @@ class GroverSampler:
                threshold: float,
                n_samples: int,
                uniform=False,
-               amplify_max=64,
+               amplify_max=128,
                amplify_num_accel_rate=6/5,
                use_optimal_amplify=False,
                oracle_eval_limit: int = 10000,
@@ -110,12 +110,10 @@ class GroverSampler:
                     initial_state = init_normal_state(n_digits, mu, cov, dim) 
             else:
                 initial_state = init_uniform_state(n_digits, dim)
-        
+
         oracle = DiagonalOracle(np.where(self.func_val < threshold, -1, 1))
-        
         amplify = [oracle.forward, ReflectionGate(initial_state).forward, regularize]
 
-        iter_num = 0
         amplify_num = 0
         oracle_eval_num = 0
 
@@ -126,20 +124,25 @@ class GroverSampler:
         now_amplify = 0
 
         while len(ys) < n_samples:
-                
             if use_optimal_amplify:
                 p = np.abs(state_vector) ** 2
                 p = p / np.sum(p)
                 acception_rate, _ = calc_acception_rate(p, self.func_val, threshold)
-                actual_amplify_num = optimal_amplify_num(acception_rate)                
+                actual_amplify_num = optimal_amplify_num(acception_rate)
             else:
                 actual_amplify_num = random.randint(0, int(amplify_num)+1) if amplify_num >= 1 else 0 
             
             if verbose:
                 print("amp_num", amplify_num, "actual", actual_amplify_num)
 
-            circuit = [] + amplify * (actual_amplify_num - now_amplify)
-            now_amplify = actual_amplify_num
+
+            if now_amplify < actual_amplify_num:
+                circuit = [] + amplify * (actual_amplify_num - now_amplify)
+                now_amplify = actual_amplify_num
+            else:
+                circuit = [] + amplify * actual_amplify_num
+                state_vector = initial_state
+                now_amplify = actual_amplify_num
 
             for i, gate in enumerate(circuit):
                 state_vector = gate(state_vector)
@@ -151,27 +154,21 @@ class GroverSampler:
             if verbose: 
                 acception_rate, accept_num = calc_acception_rate(p, self.func_val, threshold)
                 print("acception_rate", acception_rate, accept_num)
-            
-            selected_states = np.random.choice(np.arange(N), size=n_samples - len(ys), p=p)
 
-            for state in selected_states:
-                x = format(state, "0" + str(dim * n_digits) + "b")
-                x = np.array([int(x[n_digits * i:n_digits * i + n_digits], 2) / 2 ** n_digits  for i in range(dim)])
+            x = format(np.random.choice(np.arange(N), p=p), "0" + str(dim * n_digits) + "b")
+            x = np.array([int(x[n_digits * i:n_digits * i + n_digits], 2) / 2 ** n_digits  for i in range(dim)])
 
-                if amplify_num == 0:
-                    amplify_num = 1
-                else:
-                    amplify_num = min(amplify_num * amplify_num_accel_rate, amplify_max)
+            if amplify_num == 0:
+                amplify_num = 1
+            else:
+                amplify_num = min(amplify_num * amplify_num_accel_rate, amplify_max)
 
-                iter_num += 1
-
-                y = self.func(x)
-
-                oracle_eval_num += 1
+            y = self.func(x)
+            oracle_eval_num += 1
                 
-                if y < threshold:
-                    xs.append(x)
-                    ys.append(y)
+            if y < threshold:
+                xs.append(x)
+                ys.append(y)
 
             if oracle_eval_limit is not None and oracle_eval_limit < oracle_eval_num:
                 raise TimeoutError("Oracle evaluate limit exceeded.")
