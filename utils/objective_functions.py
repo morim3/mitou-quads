@@ -16,7 +16,8 @@ def get_ackley(dim=3, target=None, use_jax=False):
         target = np.ones(dim, dtype=np.float32) * 0.5
 
     def fun(x, ):
-        x = (x - target[None]) * 32.768 * 2
+        # x = (x - target[None]) * 32.768 * 2
+        x = (x - target[None]) * 4 * 2
         return 20 - 20 * np.exp(-0.2*np.sqrt(np.mean(x**2, axis=-1))) + np.e - np.exp(np.mean(np.cos(2*np.pi*x ), axis=-1))
 
     return fun, target
