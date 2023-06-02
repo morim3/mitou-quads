@@ -1,0 +1,30 @@
+import unittest
+from models.amp_sim.sampler import choice
+import numpy as np
+from collections import Counter
+
+
+class TestSampler(unittest.TestCase):
+    """test class of tashizan.py
+    """
+
+    def test_choice(self):
+        """test method for tashizan
+        """
+        n_trial = 100000
+        dim = 10
+        weight = np.ones(dim) * 10
+        option = np.arange(dim)
+
+        result = []
+        for i in range(n_trial):
+            result.append(choice(option, weight))
+
+        count = Counter(result)
+        prob = weight / np.sum(weight)
+        for i in range(dim):
+            self.assertAlmostEqual(count[i]/n_trial, prob[i], delta=0.01)
+
+
+if __name__ == "__main__":
+    unittest.main()

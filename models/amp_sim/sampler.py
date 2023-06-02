@@ -2,11 +2,17 @@ from typing import Callable, Optional
 import numpy as np
 from numpy import random
 from numpy.typing import NDArray
-# import jax.numpy as jnp
-# import jax
-# from jax import jit
-# from jax.scipy import stats
-from scipy import stats
+import jax.numpy as jnp
+import jax
+from jax import jit
+from jax.scipy import stats
+import bisect
+
+def choice(options,probs):
+    x = np.random.rand()
+    cumsum = np.cumsum(probs)
+    ind = bisect.bisect(cumsum, x*cumsum[-1])
+    return options[ind]
 
 def get_grid_point(n_bits, range_min, range_max, dim):
     x = [np.linspace(range_min, range_max,
@@ -23,11 +29,11 @@ def discrete_normal(n_bits, mean, cov, dim, range_min=0, range_max=1):
 
 def init_normal_state(n_digits: int, mu: NDArray, cov: NDArray, dim: int):
     distribution = discrete_normal(n_digits, mu, cov, dim, range_min=0, range_max=1)
-    return np.sqrt(distribution)
+    return jnp.sqrt(distribution)
 
 def init_uniform_state(n_digits: int, dim: int):
-    distribution = np.ones(2**(n_digits*dim), dtype=np.float32) / 2 ** (n_digits * dim)
-    return np.sqrt(distribution)
+    distribution = jnp.ones(2**(n_digits*dim), dtype=np.float32) / 2 ** (n_digits * dim)
+    return jnp.sqrt(distribution)
 
 class ReflectionGate:
     def __init__(self, reflection_base):
@@ -49,20 +55,20 @@ class DiagonalOracle:
     def inverse(self, state_vector: np.ndarray):
         return self.forward(state_vector)
 
-
-class ControlZ:
-    def __init__(self, N: int):
-        self.v = np.ones(N)
-        self.v[0] = -1
-
-    def forward(self, state_vector: np.ndarray):
-        return state_vector * self.v
-    
-    def inverse(self, state_vector: np.ndarray):
-        return self.forward(state_vector)
+#
+# class ControlZ:
+#     def __init__(self, N: int):
+#         self.v = jnp.ones(N)
+#         self.v[0] = -1
+#
+#     def forward(self, state_vector: np.ndarray):
+#         return state_vector * self.v
+#     
+#     def inverse(self, state_vector: np.ndarray):
+#         return self.forward(state_vector)
 
 def regularize(state_vector: np.ndarray):
-    return state_vector / np.linalg.norm(state_vector)
+    return state_vector / jnp.linalg.norm(state_vector)
 
 def calc_acception_rate(p, func_val, threshold):
     accept_flag = func_val < threshold
@@ -112,7 +118,7 @@ class GroverSampler:
                 initial_state = init_uniform_state(n_digits, dim)
 
         oracle = DiagonalOracle(np.where(self.func_val < threshold, -1, 1))
-        amplify = [oracle.forward, ReflectionGate(initial_state).forward, regularize]
+        amplify = [jit(oracle.forward), jit(ReflectionGate(initial_state).forward), jit(regularize)]
 
         amplify_num = 0
         oracle_eval_num = 0
@@ -120,7 +126,7 @@ class GroverSampler:
         xs = []
         ys = []
 
-        state_vector = np.array(initial_state)
+        state_vector = jnp.array(initial_state)
         now_amplify = 0
 
         while len(ys) < n_samples:
@@ -150,12 +156,12 @@ class GroverSampler:
             oracle_eval_num += actual_amplify_num
 
             p = np.abs(state_vector) ** 2
-            p = p / np.sum(p)
+            # p = p / jnp.sum(p) regularize in choice
             if verbose: 
                 acception_rate, accept_num = calc_acception_rate(p, self.func_val, threshold)
                 print("acception_rate", acception_rate, accept_num)
 
-            x = format(np.random.choice(np.arange(N), p=p), "0" + str(dim * n_digits) + "b")
+            x = format(choice(np.arange(N), p), "0" + str(dim * n_digits) + "b")
             x = np.array([int(x[n_digits * i:n_digits * i + n_digits], 2) / 2 ** n_digits  for i in range(dim)])
 
             if amplify_num == 0:

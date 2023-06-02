@@ -68,6 +68,12 @@ def wandb_log(result):
     #         f"dist_target_{trial}": dist_target_hists[trial],
     #         "trial": trial
     #     })
+    eval_hists = result["eval_hists"]
+    min_func_hists = result["min_func_hists"]
+
+    opt_process = [[i, x, y] for i in range(len(eval_hists)) for (x, y) in zip(eval_hists[i], min_func_hists[i]) ]
+    table = wandb.Table(data=opt_process, columns = ["trial", "x", "y"])
+    wandb.log({"optimization process" : table})
 
 
     wandb.log({
@@ -81,12 +87,6 @@ def wandb_log(result):
                   f"converged_to_global": result["converged_to_global"]
               })
 
-    eval_hists = result["eval_hists"]
-    min_func_hists = result["min_func_hists"]
-
-    opt_process = [[i, x, y] for i in range(len(eval_hists)) for (x, y) in zip(eval_hists[i], min_func_hists[i]) ]
-    table = wandb.Table(data=opt_process, columns = ["trial", "x", "y"])
-    wandb.log({"optimization process" : table})
 
 def run_trials(func, config):
     eval_hists = []
@@ -119,7 +119,7 @@ def run_trials(func, config):
 
     if config["n_jobs"] > 1:
         min_func_hists, eval_hists, dist_target_hists, eval_total, converged_to_global = zip(
-            *joblib.Parallel(n_jobs=config["n_jobs"], verbose=10)(
+            *joblib.Parallel(n_jobs=config["n_jobs"], verbose=10, batch_size=1)(
                 [joblib.delayed(run_trial)(func, method, config.copy()) for _ in range(config["n_trial"])])
         )
     else:
