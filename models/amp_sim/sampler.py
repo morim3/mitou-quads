@@ -32,8 +32,8 @@ def init_normal_state(n_digits: int, mu: NDArray, cov: NDArray, dim: int):
     return jnp.sqrt(distribution)
 
 def init_uniform_state(n_digits: int, dim: int):
-    distribution = jnp.ones(2**(n_digits*dim), dtype=np.float32) / 2 ** (n_digits * dim)
-    return jnp.sqrt(distribution)
+    distribution = jnp.ones(2**(n_digits*dim), dtype=np.float32) / jnp.sqrt(2 ** (n_digits * dim))
+    return distribution
 
 class ReflectionGate:
     def __init__(self, reflection_base):

@@ -3,7 +3,7 @@ from typing import Callable, List
 import numpy as np
 from numpy.typing import NDArray
 
-from models.amp_sim.sampler import optimal_amplify_num, GroverSampler
+from models.amp_sim.sampler import optimal_amplify_num, GroverSampler, init_uniform_state
 
 
 def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
@@ -43,6 +43,7 @@ def run_grover_minimization(
     threshold: float = config["init_threshold"]
     if config["sampler_type"] == "quantum":
         sampler = GroverSampler(func, config["n_digits"], config["n_dim"])
+        initial_state = init_uniform_state(config["n_digits"], config["n_dim"])
 
     eval_num_hist = []
     threshold_hist = []
@@ -58,7 +59,8 @@ def run_grover_minimization(
                 xs, ys, eval_num = sampler.sample(
                     None, None, threshold, n_samples=1, uniform=True,
                     use_optimal_amplify=config["use_optimal_amplify"],
-                    oracle_eval_limit=config["eval_limit_per_update"]
+                    oracle_eval_limit=config["eval_limit_per_update"],
+                    initial_state=initial_state
                 )
                 x, y = xs[0, :], ys[0]
             elif config["sampler_type"] == "classical":
