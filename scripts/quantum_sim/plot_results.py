@@ -9,8 +9,8 @@ import glob
 from matplotlib.colors import hsv_to_rgb
 from matplotlib.legend_handler import HandlerTuple
 
-plt.rcParams["font.family"] = "Noto Sans CJK JP"   # 使用するフォント
-plt.rcParams["font.size"] = 15
+# plt.rcParams["font.family"] = "Noto Sans CJK JP"   # 使用するフォント
+plt.rcParams["font.size"] = 16
 
 color = [hsv_to_rgb((260.0/360.0, 0.5, 0.85)), hsv_to_rgb((120.0 / 360.0, 0.5, 0.7)), hsv_to_rgb((30.0/360.0, 0.5, 0.95))]
 
@@ -68,12 +68,13 @@ def eval_to_func_val(experiments):
     ax = axes[0]
 
     # ax.set_ylim(1e-3, 10)
-    ax.set_xlim(0, 2000)
 
     draw_all_terminal = True
 
     handles_marker = [None] * 3
     handles_tragectory = [None] * 3 
+
+    xlim = 0
 
     for exp_id, e in enumerate(experiments):
         data = e["data"]
@@ -82,34 +83,41 @@ def eval_to_func_val(experiments):
         eval_hists = data["eval_hists"]
         min_func_hists = data["min_func_hists"]
 
-        min_func_hists = [ np.clip(np.array(min_func_hist), global_threshold, None) for min_func_hist in min_func_hists]
+        # min_func_hists = [ np.clip(np.array(min_func_hist), global_threshold, None) for min_func_hist in min_func_hists]
 
         # seq_len = int(np.ceil(np.max(term_eval_nums)))
+        xlim = max(xlim, np.max([eval_hist[-1] for eval_hist in eval_hists])+100)
 
-        ax.set_yscale('log')
+        # ax.set_yscale('log')
         for i in range(len(eval_hists)):
             r, g, b = [*e["color"]]
             handles_tragectory[exp_id], = ax.plot(
-                eval_hists[i], min_func_hists[i], c=[r, g, b, 0.4], zorder=e["zorder"] + i, lw=1)
+                eval_hists[i], min_func_hists[i], c=[r, g, b, 0.3], zorder=e["zorder"] + i, lw=1)
 
             # if min_func_hists[i][-1] <= global_threshold:
             #     min_func_hists[i][-1] *= (0.88) ** (exp_id + 1)
             
             if draw_all_terminal or min_func_hists[i][-1] > global_threshold:
+                # handles_marker[exp_id] = ax.scatter(
+                #     [eval_hists[i][-1]], [min_func_hists[i][-1]],
+                #     edgecolors=["black"], c=[[r, g, b]], s=60, alpha=0.7,
+                #     # marker=data["marker"],
+                #     marker="o" if data["converged_to_global"][i] else "x",
+                #     zorder=100_000 + e["zorder"], clip_on=False)
                 handles_marker[exp_id] = ax.scatter(
                     [eval_hists[i][-1]], [min_func_hists[i][-1]],
-                    edgecolors=["black"], c=[[r, g, b]], s=60, alpha=0.7,
+                    c=[[r, g, b]], s=60, alpha=0.7,
                     # marker=data["marker"],
-                    marker="d" if data["converged_to_global"][i] else "o",
+                    marker="o" if data["converged_to_global"][i] else "x",
                     zorder=100_000 + e["zorder"], clip_on=False)
 
+    ax.set_xlim(0, xlim)
     ax.get_xaxis().set_tick_params(pad=6)
 
     # print(handles_marker, handles_tragectory)
 
     ax = axes[1]
 
-    xlim = 3000
     ax.set_ylim(0.0, 1.0)
     ax.set_xlim(0, xlim)
 
@@ -141,10 +149,14 @@ def eval_to_func_val(experiments):
         handles_all.append(handle_all)
         handles_good.append(handle_good)
 
-    axes[0].legend(zip(handles_marker, handles_tragectory),
+    # axes[0].legend(zip(handles_marker, handles_tragectory),
+    #     [e["name"] for e in experiments],
+    #     handler_map={tuple: HandlerTuple(ndivide=None)},
+    #     fontsize=9, loc="upper right", bbox_to_anchor=(0.9, 0.88))
+    axes[0].legend(handles_tragectory,
         [e["name"] for e in experiments],
         handler_map={tuple: HandlerTuple(ndivide=None)},
-        fontsize=9, loc="upper right", bbox_to_anchor=(0.9, 0.88))
+        fontsize=14, loc="upper right", bbox_to_anchor=(0.9, 0.88))
 
     axes[0].set_xlabel("oracle calls")
     axes[0].set_ylabel("function value")
@@ -153,13 +165,13 @@ def eval_to_func_val(experiments):
     axes[0].yaxis.set_label_coords(-0.09, 0.4)
 
     axes[1].legend([tuple(handles_all), tuple(handles_good)],
-        ["convergence", "convergence to global optimal"],
+        ["convergence", "global optimal"],
         handler_map={tuple: HandlerTuple(ndivide=None)},
-        fontsize=9, loc="lower right", bbox_to_anchor=(0.9, 0.1),
+        fontsize=14, loc="lower right", bbox_to_anchor=(0.9, 0.1),
         handlelength = 8)
 
     axes[1].set_xlabel("oracle calls")
-    axes[1].set_ylabel("convergence rate")
+    axes[1].set_ylabel("ratio")
     axes[1].yaxis.set_label_coords(-0.09, 0.4)
     fig.tight_layout()
     return fig, axes
