@@ -1,0 +1,14 @@
+setuptools
+wheel
+numpy
+matplotlib
+jupyter
+scipy
+qiskit
+qiskit-finance
+pylatexenc
+tqdm
+joblib
+jax
+jaxlib
+wandb
