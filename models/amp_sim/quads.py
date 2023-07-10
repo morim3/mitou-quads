@@ -66,7 +66,7 @@ def get_samples_classical(func, quads_param:QuadsParam, config):
 
     return accepted, accepted_val, n_eval_estimated
 
-def run_quads(func: Callable[[NDArray], NDArray], config, verbose=False):
+def run_quads(func: Callable[[NDArray], NDArray], config, verbose=False, return_samples=False):
     init_param = QuadsParam(
         config["init_threshold"], CMAParam(config["init_mean"], config["init_cov"], config["init_step_size"] ))
     hp = QuadsHyperParam(quantile=config["quantile"], smoothing_th=config["smoothing_th"], 
@@ -80,6 +80,8 @@ def run_quads(func: Callable[[NDArray], NDArray], config, verbose=False):
     param_hist = [init_param]
     min_func_hist = []
     dist_target_hist = []
+    if return_samples:
+        samples_hist = []
 
     min_val = np.inf
 
@@ -110,6 +112,8 @@ def run_quads(func: Callable[[NDArray], NDArray], config, verbose=False):
         min_func_hist.append(min_val)
         dist_target_hist.append(dist_target)
         eval_num_hist.append(n_eval)
+        if return_samples:
+            samples_hist.append(accepted)
 
         if verbose:
             print(f"""\
@@ -128,6 +132,10 @@ eval_num: {eval_num_hist[-1]}
 
     if verbose:
         print("total_eval_num: ", sum(eval_num_hist))
+
+    if return_samples:
+        return quads_param, (np.array(min_func_hist),np.array(eval_num_hist), np.array(dist_target_hist), param_hist, samples_hist)
+
     return quads_param, (np.array(min_func_hist),np.array(eval_num_hist), np.array(dist_target_hist), param_hist )
 
 

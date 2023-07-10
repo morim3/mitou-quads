@@ -141,7 +141,6 @@ def main(args):
     func, target = objective_functions[args.func](dim=n_dim, use_jax=args.method=="adam")
     assert n_dim == target.shape[-1]
 
-
     init_cov = np.identity(n_dim) * args.init_normal_std
 
     config = {}
@@ -193,9 +192,7 @@ def main(args):
         wandb.save(save_path)
 
 
-if __name__ == "__main__":
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
+def parse_args(parser):
     parser.add_argument("--project_name")
     parser.add_argument("--name", default=None)
     parser.add_argument("--group", default=None)
@@ -222,7 +219,13 @@ if __name__ == "__main__":
     parser.add_argument("--eval_limit_per_update", default=10000, type=int)
     parser.add_argument('--init_normal_std', type=np.float32, default=1)
     parser.add_argument('--init_step_size', type=np.float32, default=0.5)
-    args = parser.parse_args()
+    return parser
+
+if __name__ == "__main__":
     
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    args = parse_args()
+    args = parser.parse_args()
     main(args)
 

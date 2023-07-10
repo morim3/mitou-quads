@@ -9,8 +9,10 @@ import glob
 from matplotlib.colors import hsv_to_rgb
 from matplotlib.legend_handler import HandlerTuple
 
-# plt.rcParams["font.family"] = "Noto Sans CJK JP"   # 使用するフォント
-plt.rcParams["font.size"] = 16
+from utils.mplsetting import get_costom_rcparams
+
+
+plt.rcParams.update(get_costom_rcparams())
 
 color = [hsv_to_rgb((260.0/360.0, 0.5, 0.85)), hsv_to_rgb((120.0 / 360.0, 0.5, 0.7)), hsv_to_rgb((30.0/360.0, 0.5, 0.95))]
 
@@ -92,7 +94,7 @@ def eval_to_func_val(experiments):
         for i in range(len(eval_hists)):
             r, g, b = [*e["color"]]
             handles_tragectory[exp_id], = ax.plot(
-                eval_hists[i], min_func_hists[i], c=[r, g, b, 0.3], zorder=e["zorder"] + i, lw=1)
+                eval_hists[i], min_func_hists[i], c=[r, g, b, 0.3], zorder=e["zorder"] + i, lw=1, )
 
             # if min_func_hists[i][-1] <= global_threshold:
             #     min_func_hists[i][-1] *= (0.88) ** (exp_id + 1)
@@ -156,23 +158,23 @@ def eval_to_func_val(experiments):
     axes[0].legend(handles_tragectory,
         [e["name"] for e in experiments],
         handler_map={tuple: HandlerTuple(ndivide=None)},
-        fontsize=14, loc="upper right", bbox_to_anchor=(0.9, 0.88))
+        loc="upper right", bbox_to_anchor=(0.9, 0.88))
 
     axes[0].set_xlabel("oracle calls")
     axes[0].set_ylabel("function value")
     # axes[0].set_xlabel("関数評価回数")
     # axes[0].set_ylabel("\n".join("関数評価値"), rotation=0, loc="center")
-    axes[0].yaxis.set_label_coords(-0.09, 0.4)
+    # axes[0].yaxis.set_label_coords(-0.09, 0.4)
 
     axes[1].legend([tuple(handles_all), tuple(handles_good)],
         ["convergence", "global optimal"],
         handler_map={tuple: HandlerTuple(ndivide=None)},
-        fontsize=14, loc="lower right", bbox_to_anchor=(0.9, 0.1),
+        loc="lower right", bbox_to_anchor=(0.9, 0.1),
         handlelength = 8)
 
     axes[1].set_xlabel("oracle calls")
     axes[1].set_ylabel("ratio")
-    axes[1].yaxis.set_label_coords(-0.09, 0.4)
+    # axes[1].yaxis.set_label_coords(-0.09, 0.4)
     fig.tight_layout()
     return fig, axes
 
