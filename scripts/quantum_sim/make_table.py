@@ -30,10 +30,9 @@ def get_mean_eval_to_global(evals, is_converged):
     if p == 0:
         return np.inf
     if p != 1:
-        return min(suc, fail) + fail * (1-p) / p
+        return suc + fail * (1-p) / p
     else:
         return suc
-
 
 def wrapper_bootstrap(samples):
     return get_mean_eval_to_global(samples[:, 0], samples[:, 1])
