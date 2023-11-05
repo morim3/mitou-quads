@@ -23,6 +23,7 @@ def get_samples_grover(sampler: GroverSampler, quads_param: QuadsParam, config):
     accepted, accepted_val, eval_num = sampler.sample(
         mean, cov, threshold, config["n_samples"],
         use_optimal_amplify=config["use_optimal_amplify"],
+        amplify_max=np.inf,
         initial_state=initial_state,
         oracle_eval_limit=config["eval_limit_per_update"])
 

@@ -60,6 +60,8 @@ def run_grover_minimization(
             if config["sampler_type"] == "quantum":
                 xs, ys, eval_num = sampler.sample(
                     None, None, threshold, n_samples=1, uniform=True,
+                    #TODO 20231105 check
+                    amplify_max=2**int(config["n_digits"]*config["n_dim"]/2),
                     use_optimal_amplify=config["use_optimal_amplify"],
                     oracle_eval_limit=config["eval_limit_per_update"],
                     initial_state=initial_state
