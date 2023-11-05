@@ -122,9 +122,20 @@ def levy(dim=3, target=None, use_jax=False):
     def fun(x):
         x = (x-0.5) * 20
         x = 1 + (x - 1) / 4
-        return np.sin(np.pi*x[:, 0])**2+np.sum((x[:, :-1]-1)**2*(1+10*np.sin(np.pi*x[:, 1:])**2)) + (x[:, -1]-1)**2 * (1+np.sin(2*np.pi*x[:, -1]))
+        return np.sin(np.pi*x[..., 0])**2+np.sum((x[..., :-1]-1)**2*(1+10*np.sin(np.pi*x[..., 1:])**2)) + (x[..., -1]-1)**2 * (1+np.sin(2*np.pi*x[..., -1]))
 
     return fun, target
+
+def sineEnvelope(dim=3, target=None, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
+    target = np.ones(dim, dtype=np.float32) * 0.5
+
+    def fun(x):
+        x = (x - 0.5) * 200
+        return -np.sum(np.sin(np.sqrt(x[..., :-1]**2+x[..., 1:]**2)-0.5) ** 2 / (1+0.001*(x[..., :-1]**2+x[..., 1:]**2))**2 + 0.5, axis=-1)
+
+    return fun, target
+
 
 def mishra(dim=3, target=None, use_jax=False):
     np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
@@ -169,6 +180,7 @@ objective_functions = {
     "alpine01": alpine01,
     "alpine02": alpine02,
     "levy": levy,
+    "sineEnvelope": sineEnvelope,
     "mishra": mishra,
     "deflectedCorrugatedSpring": deflectedCorrugatedSpring,
     "wavy": wavy,
