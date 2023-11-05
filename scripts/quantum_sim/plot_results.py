@@ -9,16 +9,15 @@ import glob
 from matplotlib.colors import hsv_to_rgb
 from matplotlib.legend_handler import HandlerTuple
 
-from utils.mplsetting import get_costom_rcparams
+from utils.mplsetting import get_custom_rcparams
 
-
-plt.rcParams.update(get_costom_rcparams())
+plt.rcParams.update(get_custom_rcparams())
 
 color = [hsv_to_rgb((260.0/360.0, 0.5, 0.85)), hsv_to_rgb((120.0 / 360.0, 0.5, 0.7)), hsv_to_rgb((30.0/360.0, 0.5, 0.95))]
 
 def load_experiments(entity, func, dim):
 
-    prefix = f"{entity}/mitou-quads-quantum"
+    prefix = f"{entity}/mitou-quads-quantum2"
     experiments = []
 
     def get_result(method):
@@ -161,7 +160,7 @@ def eval_to_func_val(experiments):
         loc="upper right", bbox_to_anchor=(0.9, 0.88))
 
     axes[0].set_xlabel("oracle calls")
-    axes[0].set_ylabel("function value")
+    axes[0].set_ylabel("smallest function value \n up to the oracle calls")
     # axes[0].set_xlabel("関数評価回数")
     # axes[0].set_ylabel("\n".join("関数評価値"), rotation=0, loc="center")
     # axes[0].yaxis.set_label_coords(-0.09, 0.4)
@@ -173,7 +172,7 @@ def eval_to_func_val(experiments):
         handlelength = 8)
 
     axes[1].set_xlabel("oracle calls")
-    axes[1].set_ylabel("ratio")
+    axes[1].set_ylabel("proportion of terminated trials")
     # axes[1].yaxis.set_label_coords(-0.09, 0.4)
     fig.tight_layout()
     return fig, axes

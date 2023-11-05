@@ -10,7 +10,9 @@ from scipy.stats import multivariate_normal
 from typing import List
 import matplotlib.cm as cm
 import matplotlib.patches as pat
+from utils.mplsetting import get_custom_rcparams
 
+plt.rcParams.update(get_custom_rcparams())
 
 def run_method(args):
 
@@ -60,7 +62,7 @@ def plot_animation(param_hists: List[CMAParam], sample_hists, func, output_path)
     fig, ax = plt.subplots(1, 1, figsize=(10, 10), dpi=100)
     ax.pcolormesh(X, Y, Z)
 
-    ax.scatter(target[0], target[1], marker="*", color="red", s=100)
+    ax.scatter(target[0], target[1], marker="*", color="red", s=200)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
 
@@ -83,7 +85,7 @@ def plot_animation(param_hists: List[CMAParam], sample_hists, func, output_path)
         ell.set_facecolor('none')
         ax.add_artist(ell)
 
-        ax.scatter(sample_hists[i][:, 0], sample_hists[i][:, 1], marker=".", color=cm.hsv(i/len(param_hists)), alpha=0.9, s=150, ec="black", lw=0.5)
+        ax.scatter(sample_hists[i][:, 0], sample_hists[i][:, 1], marker=".", color=cm.hsv(i/len(param_hists)), alpha=0.9, s=200, ec="black", lw=0.5)
 
     fig.savefig(output_path)
 
@@ -93,6 +95,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("-o", type=str, default="quads_animation.png")
     parser = parse_args(parser)
+
     args = parser.parse_args()
 
     # when no param_hist.npy, run quads
