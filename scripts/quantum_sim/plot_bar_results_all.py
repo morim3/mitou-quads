@@ -12,6 +12,21 @@ import wandb
 from utils.bootstrap_confidence import bootstrap_confidence
 from utils.mplsetting import get_custom_rcparams
 
+customrc = {
+    # 'axes.labelsize': 8.8,
+    # 'axes.titlesize': 9.6,
+    'xtick.labelsize': 20,
+    'ytick.labelsize': 20,
+    'legend.fontsize': 20,
+    'font.size': 20,
+
+    # font
+    'font.family': 'Times New Roman',
+    'mathtext.fontset': 'stix',  # Computer Modern
+    'ytick.direction': 'in',
+}
+plt.rcParams.update(customrc)
+
 Result = namedtuple('Result', ['mean_eval_success', 'std_eval_success',
                                'mean_eval_failure', 'std_eval_failure', 'converged_rate', 'mean_eval_to_global', 'eval_total', 'converged_to_global'])
 
@@ -68,7 +83,7 @@ if __name__ == '__main__':
     funs = [ "rastrigin", "schwefel","styblinski_tang",  "ackley","rosenbrock",  "alpine01", "alpine02", "deflectedCorrugatedSpring", "griewank",
             # "mishra",
            "squared", "wavy"]
-    synonims = { "rastrigin": "rastrigin", "schwefel": "schwefel" ,"styblinski_tang": "styblinski tang",  "ackley": "ackley","rosenbrock": "rosenbrock",  "alpine01": "alpine01", "alpine02":"apline02", "deflectedCorrugatedSpring": "DCS", "griewank": "griewank", "squared": "squared", "wavy": "wavy"}
+    synonims = { "rastrigin": "rastrigin", "schwefel": "schwefel" ,"styblinski_tang": "styblinski tang",  "ackley": "ackley","rosenbrock": "rosenbrock",  "alpine01": "alpine01", "alpine02":"apline02", "deflectedCorrugatedSpring": "deflected corrugated spring", "griewank": "griewank", "squared": "squared", "wavy": "wavy"}
     for fun in funs:
         table.append([])
 
@@ -88,34 +103,33 @@ if __name__ == '__main__':
 
     df = pd.DataFrame(table, columns=pd.MultiIndex.from_product([methods, ['lower', 'base', 'upper']]), index=funs)
 
-    with plt.rc_context(get_custom_rcparams()):
-        # 棒グラフの描画
-        fig, ax = plt.subplots(figsize=(15, 8))  # 横長の図のサイズを設定
+    # 棒グラフの描画
+    fig, ax = plt.subplots(figsize=(15, 8))  # 横長の図のサイズを設定
 
-        width = 0.25  # 棒グラフの幅
-        colors = [hsv_to_rgb((260.0/360.0, 0.5, 0.85)), hsv_to_rgb((120.0 / 360.0, 0.5, 0.7)), hsv_to_rgb((30.0/360.0, 0.5, 0.95))]  # 手法ごとに異なる色を設定
+    width = 0.25  # 棒グラフの幅
+    colors = [hsv_to_rgb((260.0/360.0, 0.5, 0.85)), hsv_to_rgb((120.0 / 360.0, 0.5, 0.7)), hsv_to_rgb((30.0/360.0, 0.5, 0.95))]  # 手法ごとに異なる色を設定
 
         # データをプロット
-        for i, method in enumerate(methods):
-            positions = np.arange(len(funs)) + i * width
-            means = df[method, 'base']
-            lower = df[method, 'base'] - df[method, 'lower']
-            upper = df[method, 'upper'] - df[method, 'base']
-            # replace inf
-            big_value = 1e10
-            upper = np.where(np.isinf(upper), big_value, upper)
-            print(means, lower, upper, type(upper))
+    for i, method in enumerate(methods):
+        positions = np.arange(len(funs)) + i * width
+        means = df[method, 'base']
+        lower = df[method, 'base'] - df[method, 'lower']
+        upper = df[method, 'upper'] - df[method, 'base']
+        # replace inf
+        big_value = 1e10
+        upper = np.where(np.isinf(upper), big_value, upper)
+        print(means, lower, upper, type(upper))
 
-            ax.bar(positions, means, width=width, label=methods_label[i], color=colors[i], yerr=[lower, upper], capsize=5, log=True)
+        ax.bar(positions, means, width=width, label=methods_label[i], color=colors[i], yerr=[lower, upper], capsize=5, log=True)
 
-        # 軸とタイトルの設定
-        ax.set_ylabel('Expected oracle call count (Log scale)')
-        # ax.set_title('Comparative Evaluation Counts per Method')
-        ax.set_xticks(np.arange(len(funs)) + width)
-        ax.set_xticklabels([synonims[f] for f in funs])
-        plt.setp(ax.get_xticklabels(), rotation=45, horizontalalignment='right')
-        ax.legend()
+    # 軸とタイトルの設定
+    ax.set_ylabel('Expected oracle call count (log scale)')
+    # ax.set_title('Comparative Evaluation Counts per Method')
+    ax.set_xticks(np.arange(len(funs)) + width)
+    ax.set_xticklabels([synonims[f] for f in funs])
+    plt.setp(ax.get_xticklabels(), rotation=20, horizontalalignment='right')
+    ax.legend()
 
-        # プロットの表示
-        plt.tight_layout()  # レイアウトの自動調整
-        plt.savefig("outputs/bar_all.pdf")
+    # プロットの表示
+    plt.tight_layout()  # レイアウトの自動調整
+    plt.savefig("outputs/bar_all.pdf")

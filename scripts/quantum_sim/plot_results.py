@@ -76,6 +76,7 @@ def eval_to_func_val(experiments):
     handles_tragectory = [None] * 3 
 
     xlim = 0
+    xlim = 2000
 
     for exp_id, e in enumerate(experiments):
         data = e["data"]
@@ -87,7 +88,7 @@ def eval_to_func_val(experiments):
         # min_func_hists = [ np.clip(np.array(min_func_hist), global_threshold, None) for min_func_hist in min_func_hists]
 
         # seq_len = int(np.ceil(np.max(term_eval_nums)))
-        xlim = max(xlim, np.max([eval_hist[-1] for eval_hist in eval_hists])+100)
+        # xlim = max(xlim, np.max([eval_hist[-1] for eval_hist in eval_hists])+100)
 
         # ax.set_yscale('log')
         for i in range(len(eval_hists)):
@@ -160,13 +161,13 @@ def eval_to_func_val(experiments):
         loc="upper right", bbox_to_anchor=(0.9, 0.88))
 
     axes[0].set_xlabel("oracle calls")
-    axes[0].set_ylabel("smallest function value \n up to the oracle calls")
+    axes[0].set_ylabel("smallest function value \n up to oracle calls")
     # axes[0].set_xlabel("関数評価回数")
     # axes[0].set_ylabel("\n".join("関数評価値"), rotation=0, loc="center")
     # axes[0].yaxis.set_label_coords(-0.09, 0.4)
 
     axes[1].legend([tuple(handles_all), tuple(handles_good)],
-        ["convergence", "global optimal"],
+        ["terminated", "global optimal"],
         handler_map={tuple: HandlerTuple(ndivide=None)},
         loc="lower right", bbox_to_anchor=(0.9, 0.1),
         handlelength = 8)
