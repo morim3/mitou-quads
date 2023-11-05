@@ -1,12 +1,12 @@
-def get_costom_rcparams():
+def get_custom_rcparams():
     # based on seaborn-paper context
     customrc = {
         # 'axes.labelsize': 8.8,
         # 'axes.titlesize': 9.6,
-        # 'xtick.labelsize': 8,
-        # 'ytick.labelsize': 8,
-        'legend.fontsize': 15,
-        'font.size': 15,
+        'xtick.labelsize': 20,
+        'ytick.labelsize': 20,
+        'legend.fontsize': 20,
+        'font.size': 20,
 
         # default grid.linewidth=0.8 is too bold
         'grid.linewidth': 0.2,

@@ -225,7 +225,7 @@ if __name__ == "__main__":
     
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    args = parse_args()
+    args = parse_args(parser)
     args = parser.parse_args()
     main(args)
 

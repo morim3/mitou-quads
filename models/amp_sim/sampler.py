@@ -80,6 +80,7 @@ def optimal_amplify_num(p):
     sqrt_rate = np.sqrt(p)
     return int(np.arccos(sqrt_rate) / (2 * np.arcsin(sqrt_rate)))
 
+
 class GroverSampler:
     def __init__(self,
                  func: Callable[[NDArray], NDArray],

@@ -4,8 +4,10 @@ from typing import Callable, List, Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from models.amp_sim.sampler import init_normal_state, optimal_amplify_num, GroverSampler
+from models.amp_sim.sampler import init_normal_state, GroverSampler
 from models.parameters import CMAHyperParam, CMAParam, QuadsParam, QuadsHyperParam, update_quads_params, get_normal_samples
+
+from utils.amplify_num import optimal_amplify_num, upper_bound_amplify_num
 
 
 def get_samples_grover(sampler: GroverSampler, quads_param: QuadsParam, config):
@@ -21,6 +23,7 @@ def get_samples_grover(sampler: GroverSampler, quads_param: QuadsParam, config):
     accepted, accepted_val, eval_num = sampler.sample(
         mean, cov, threshold, config["n_samples"],
         use_optimal_amplify=config["use_optimal_amplify"],
+        amplify_max=np.inf,
         initial_state=initial_state,
         oracle_eval_limit=config["eval_limit_per_update"])
 
