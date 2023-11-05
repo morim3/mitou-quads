@@ -30,7 +30,7 @@ def get_mean_eval_to_global(evals, is_converged):
     if p == 0:
         return np.inf
     if p != 1:
-        return min(suc, fail) + fail * (1-p) / p
+        return suc + fail * (1-p) / p
     else:
         return suc
 
@@ -41,7 +41,7 @@ def wrapper_bootstrap(samples):
 if __name__ == '__main__':
 
     api = wandb.Api()
-    runs = api.runs(f"preview-control/mitou-quads-quantum")
+    runs = api.runs(f"preview-control/mitou-quads-quantum2")
 
     results = {}
 
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
     table = []
 
-    funs = ["schwefel", "rastrigin", "styblinski_tang", "ackley", "squared", "easom"]
+    funs = ["schwefel", "rastrigin", "styblinski_tang", "ackley", "squared"]
     for fun in funs:
         table.append([])
 
