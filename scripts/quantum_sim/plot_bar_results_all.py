@@ -98,6 +98,10 @@ if __name__ == '__main__':
         means = df[method, 'base']
         lower = df[method, 'base'] - df[method, 'lower']
         upper = df[method, 'upper'] - df[method, 'base']
+        # replace inf
+        upper = np.where(np.isinf(upper), 5e5, upper)
+        print(means, lower, upper, type(upper))
+
         ax.bar(positions, means, width=width, label=method, color=colors[i], yerr=[lower, upper], capsize=5, log=True)
 
     # 軸とタイトルの設定
@@ -105,6 +109,9 @@ if __name__ == '__main__':
     ax.set_title('Comparative Evaluation Counts per Method')
     ax.set_xticks(np.arange(len(funs)) + width)
     ax.set_xticklabels(funs)
+    ax.set_ylim(1, 4e5)
+    # incline xticklabels
+    plt.setp(ax.get_xticklabels(), rotation=20, horizontalalignment='right')
     ax.legend()
 
     # プロットの表示
