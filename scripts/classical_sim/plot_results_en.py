@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import wandb
+from scipy.stats import linregress
 from utils.bootstrap_confidence import bootstrap_confidence
 
 from utils.mplsetting import get_costom_rcparams
@@ -44,7 +45,8 @@ def wrapper_bootstrap(samples):
 def plot_expected_eval(results, funs):
     for fun in funs:
         fig, ax = plt.subplots()
-        method_name = ["GAS", "CMA-ES", "QuADS", ]
+        method_name = ["GAS", "CMA-ES", "QuADS"]
+        
         for method_i, method in enumerate(["grover", "cmaes", "quads"]):
             line_x = []
             line_y = []
@@ -53,12 +55,11 @@ def plot_expected_eval(results, funs):
                 suggest_name = method+"_"+fun+"_"+str(dim)
                 if suggest_name in results:
                     result = results[suggest_name]
-                    conf_interval = bootstrap_confidence(np.stack([result.eval_total, result.converged_to_global], axis=-1), wrapper_bootstrap, n_bootstrap=5000, alpha=0.05, )
+                    conf_interval = bootstrap_confidence(np.stack([result.eval_total, result.converged_to_global], axis=-1), wrapper_bootstrap, n_bootstrap=5000, alpha=0.05)
 
                     errors.append(conf_interval)
                     line_x.append(dim)
                     line_y.append(result.mean_eval_to_global)
-
 
             for errors_i, (min_interval, max_interval) in enumerate(errors):
                 if max_interval == np.inf:
@@ -67,13 +68,35 @@ def plot_expected_eval(results, funs):
             errorbar = np.abs(np.array(errors).T-np.array(line_y))
             ax.errorbar(np.array(line_x)+0.05*method_i, line_y, yerr=errorbar, label=method_name[method_i], capsize=5, ecolor=color[method_i], color=color[method_i])
 
+            finite_inds = np.isfinite(line_y)
+            finite_line_x = np.array(line_x)[finite_inds]
+            finite_line_y = np.array(line_y)[finite_inds]
+
+            # calculate regression line
+            slope, intercept, r_value, p_value, std_err = linregress(finite_line_x, np.log10(finite_line_y))
+            r_squared = r_value**2
+            
+            regression_line_x = np.array(finite_line_x)
+            regression_line_y = 10**(intercept + slope * regression_line_x)
+
+            print(method, finite_line_x, finite_line_y)
+            
+            # plot regression line
+            ax.plot(regression_line_x + 0.05 * method_i, regression_line_y, linestyle='--', color=color[method_i])
+            
+            # plot regression line equation and r^2 
+            ax.text(regression_line_x[-1] - 1.25, regression_line_y[-1] * 2,
+                    '$o_{\\rm total}\\approx' + f'{10**intercept:.2f} \\times {10**slope:.2f}^d$\n' + f'$r^2 = {r_squared:.3f}$',
+                    color=color[method_i] * 0.75,
+                    fontsize=10)
+            
         ax.set_ylim(1, 1000000)
         ax.set_yscale("log")
         ax.legend(loc='lower right')
-        ax.set_xlabel("dim")
+        ax.set_xlabel("Dimension (dim)")
         ax.set_ylabel("Oracle call counts")
         fig.tight_layout()
-        fig.savefig(f"expected_eval_{fun}.pdf")
+        fig.savefig(f"outputs/expected_eval_{fun}.pdf")
 
 
 def plot_evals(results: List[Result], funs):
@@ -116,7 +139,7 @@ def plot_evals(results: List[Result], funs):
         ax[2].set_title("CMA-ES")
         ax[2].set_xlabel("次元")
         fig.tight_layout()
-        fig.savefig(f"evals_{fun}.pdf")
+        fig.savefig(f"outputs/evals_{fun}.pdf")
         
 
 if __name__ == '__main__':
