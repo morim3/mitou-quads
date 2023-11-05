@@ -3,7 +3,9 @@ from typing import Callable, List
 import numpy as np
 from numpy.typing import NDArray
 
-from models.amp_sim.sampler import optimal_amplify_num, GroverSampler, init_uniform_state
+from models.amp_sim.sampler import GroverSampler, init_uniform_state
+
+from utils.amplify_num import optimal_amplify_num
 
 
 def uniform_sampling_classical(func, dim, threshold, oracle_eval_limit):
