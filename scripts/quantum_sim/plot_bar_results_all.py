@@ -64,6 +64,7 @@ if __name__ == '__main__':
     table = []
 
     methods = ["grover", "cmaes", "quads"]
+    methods_label = ["GAS", "CMA-ES", "QuADS"]
     funs = [ "rastrigin", "schwefel","styblinski_tang",  "ackley","rosenbrock",  "alpine01", "alpine02", "deflectedCorrugatedSpring", "griewank",
             # "mishra",
            "squared", "wavy"]
@@ -100,11 +101,11 @@ if __name__ == '__main__':
             means = df[method, 'base']
             lower = df[method, 'base'] - df[method, 'lower']
             upper = df[method, 'upper'] - df[method, 'base']
-        # replace inf
-        upper = np.where(np.isinf(upper), 5e5, upper)
-        print(means, lower, upper, type(upper))
+            # replace inf
+            upper = np.where(np.isinf(upper), 5e5, upper)
+            print(means, lower, upper, type(upper))
 
-            ax.bar(positions, means, width=width, label=method, color=colors[i], yerr=[lower, upper], capsize=5, log=True)
+            ax.bar(positions, means, width=width, label=methods_label[i], color=colors[i], yerr=[lower, upper], capsize=5, log=True)
 
         # 軸とタイトルの設定
         ax.set_ylabel('Expected oracle call count (Log scale)')
