@@ -125,10 +125,13 @@ if __name__ == '__main__':
     # 軸とタイトルの設定
     ax.set_ylabel('Expected oracle call count (log scale)')
     # ax.set_title('Comparative Evaluation Counts per Method')
+    ax.set_ylim(1, 5e5)
     ax.set_xticks(np.arange(len(funs)) + width)
     ax.set_xticklabels([synonims[f] for f in funs])
     plt.setp(ax.get_xticklabels(), rotation=20, horizontalalignment='right')
-    ax.legend()
+
+    # 凡例を上部に表示
+    ax.legend(loc='upper left', ncol=3)
 
     # プロットの表示
     plt.tight_layout()  # レイアウトの自動調整
