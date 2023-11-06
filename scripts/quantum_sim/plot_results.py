@@ -111,7 +111,7 @@ def eval_to_func_val(experiments):
                     c=[[r, g, b]], s=60, alpha=0.7,
                     # marker=data["marker"],
                     marker="o" if data["converged_to_global"][i] else "x",
-                    zorder=100_000 + e["zorder"], clip_on=False)
+                    zorder=100_000 + e["zorder"], clip_on=True)
 
     ax.set_xlim(0, xlim)
     ax.get_xaxis().set_tick_params(pad=6)
@@ -170,10 +170,11 @@ def eval_to_func_val(experiments):
         ["terminated", "global optimal"],
         handler_map={tuple: HandlerTuple(ndivide=None)},
         loc="lower right", bbox_to_anchor=(0.9, 0.1),
-        handlelength = 8)
+        handlelength = 3)
 
     axes[1].set_xlabel("oracle calls")
     axes[1].set_ylabel("proportion of terminated trials")
+    axes[1].set_ylim(0.0, 1.0 + 0.04)
     # axes[1].yaxis.set_label_coords(-0.09, 0.4)
     fig.tight_layout()
     return fig, axes
