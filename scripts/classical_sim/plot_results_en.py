@@ -58,7 +58,7 @@ def plot_expected_eval(classical_results, quantum_results, funs):
             line_x = []
             line_y = []
             errors = []
-            for dim in range(2, 13):
+            for dim in range(1, 13):
                 suggest_name = method+"_"+fun+"_"+str(dim)
                 if suggest_name in classical_results:
                     result = classical_results[suggest_name]
@@ -101,7 +101,7 @@ def plot_expected_eval(classical_results, quantum_results, funs):
             ax.text(regression_line_x[-1] - 1.25, regression_line_y[-1] * 2,
                     '$o_{\\rm total}\\approx' + f'{10**intercept:.2f} \\times {10**slope:.2f}^d$\n' + f'$r^2 = {r_squared:.3f}$',
                     color=color[method_i] * 0.75,
-                    fontsize=10)
+                    fontsize=20)
         
         # quantum results
         for method_i, method in enumerate(["grover", "cmaes", "quads"]):
@@ -110,7 +110,7 @@ def plot_expected_eval(classical_results, quantum_results, funs):
             line_x = []
             line_y = []
             errors = []
-            for dim in range(2, 13):
+            for dim in range(1, 13):
                 suggest_name = method+"_"+fun+"_"+str(dim)
                 if suggest_name in quantum_results:
                     result = quantum_results[suggest_name]
@@ -124,6 +124,8 @@ def plot_expected_eval(classical_results, quantum_results, funs):
                     linestyle='--',
                     color=color[method_i] * 0.75)
 
+        from matplotlib.ticker import MaxNLocator
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
         ax.set_ylim(1, 1000000)
         ax.set_yscale("log")
         ax.legend(loc='lower right')
