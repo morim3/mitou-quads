@@ -83,7 +83,7 @@ if __name__ == '__main__':
     funs = [ "rastrigin", "schwefel","styblinski_tang",  "ackley","rosenbrock",  "alpine01", "alpine02", "deflectedCorrugatedSpring", "griewank",
             # "mishra",
            "squared", "wavy"]
-    synonims = { "rastrigin": "rastrigin", "schwefel": "schwefel" ,"styblinski_tang": "styblinski tang",  "ackley": "ackley","rosenbrock": "rosenbrock",  "alpine01": "alpine01", "alpine02":"apline02", "deflectedCorrugatedSpring": "deflected corrugated spring", "griewank": "griewank", "squared": "squared", "wavy": "wavy"}
+    synonims = { "rastrigin": "rastrigin", "schwefel": "schwefel" ,"styblinski_tang": "styblinski tang",  "ackley": "ackley","rosenbrock": "rosenbrock",  "alpine01": "alpine01", "alpine02":"alpine02", "deflectedCorrugatedSpring": "deflected corrugated spring", "griewank": "griewank", "squared": "squared", "wavy": "wavy"}
     for fun in funs:
         table.append([])
 
