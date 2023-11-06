@@ -13,9 +13,9 @@ import wandb
 from scipy.stats import linregress
 from utils.bootstrap_confidence import bootstrap_confidence
 
-from utils.mplsetting import get_costom_rcparams
+from utils.mplsetting import get_custom_rcparams
 
-plt.rcParams.update(get_costom_rcparams())
+plt.rcParams.update(get_custom_rcparams())
 
 Result = namedtuple('Result', ['mean_eval_success', 'std_eval_success',
                                'mean_eval_failure', 'std_eval_failure', 'converged_rate', 'mean_eval_to_global', 'eval_total', 'converged_to_global'])
@@ -42,10 +42,12 @@ def wrapper_bootstrap(samples):
     return get_mean_eval_to_global(samples[:, 0], samples[:, 1])
 
 
-def plot_expected_eval(results, funs):
+def plot_expected_eval(classical_results, quantum_results, funs):
     for fun in funs:
         fig, ax = plt.subplots()
         method_name = ["GAS", "CMA-ES", "QuADS"]
+
+        # classical results
         
         for method_i, method in enumerate(["grover", "cmaes", "quads"]):
             line_x = []
@@ -53,8 +55,8 @@ def plot_expected_eval(results, funs):
             errors = []
             for dim in range(2, 13):
                 suggest_name = method+"_"+fun+"_"+str(dim)
-                if suggest_name in results:
-                    result = results[suggest_name]
+                if suggest_name in classical_results:
+                    result = classical_results[suggest_name]
                     conf_interval = bootstrap_confidence(np.stack([result.eval_total, result.converged_to_global], axis=-1), wrapper_bootstrap, n_bootstrap=5000, alpha=0.05)
 
                     errors.append(conf_interval)
@@ -89,7 +91,26 @@ def plot_expected_eval(results, funs):
                     '$o_{\\rm total}\\approx' + f'{10**intercept:.2f} \\times {10**slope:.2f}^d$\n' + f'$r^2 = {r_squared:.3f}$',
                     color=color[method_i] * 0.75,
                     fontsize=10)
-            
+        
+        # quantum results
+        for method_i, method in enumerate(["grover", "cmaes", "quads"]):
+            if method == "cmaes":
+                continue
+            line_x = []
+            line_y = []
+            errors = []
+            for dim in range(2, 13):
+                suggest_name = method+"_"+fun+"_"+str(dim)
+                if suggest_name in quantum_results:
+                    result = quantum_results[suggest_name]
+                    conf_interval = bootstrap_confidence(np.stack([result.eval_total, result.converged_to_global], axis=-1), wrapper_bootstrap, n_bootstrap=5000, alpha=0.05)
+
+                    errors.append(conf_interval)
+                    line_x.append(dim)
+                    line_y.append(result.mean_eval_to_global)
+
+            ax.plot(line_x, line_y, linestyle=':', color=color[method_i] * 0.75)
+
         ax.set_ylim(1, 1000000)
         ax.set_yscale("log")
         ax.legend(loc='lower right')
@@ -145,15 +166,32 @@ def plot_evals(results: List[Result], funs):
 if __name__ == '__main__':
 
     api = wandb.Api()
+    classical_results = {}
+    quantum_results = {}
     runs = api.runs(f"preview-control/mitou-quads-classical2")
-
-    results = {}
     for run in runs:
         summary = run.summary
         if "mean_eval_success" not in summary:
             continue
 
-        results[run.name] = Result(
+        classical_results[run.name] = Result(
+            summary["mean_eval_success"],
+            summary["std_eval_success"],
+            summary["mean_eval_failure"],
+            summary["std_eval_failure"],
+            summary["converged_rate"],
+            get_mean_eval_to_global(summary["eval_total"], summary["converged_to_global"]),
+            summary["eval_total"],
+            summary["converged_to_global"]
+        )
+    
+    runs = api.runs(f"preview-control/mitou-quads-quantum2")
+    for run in runs:
+        summary = run.summary
+        if "mean_eval_success" not in summary:
+            continue
+
+        quantum_results[run.name] = Result(
             summary["mean_eval_success"],
             summary["std_eval_success"],
             summary["mean_eval_failure"],
@@ -168,5 +206,5 @@ if __name__ == '__main__':
 
     funs = ["schwefel", "styblinski_tang", "rastrigin", ]
 
-    plot_expected_eval(results, funs)
+    plot_expected_eval(classical_results, quantum_results, funs)
     # plot_evals(results, funs)
