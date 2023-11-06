@@ -102,7 +102,8 @@ if __name__ == '__main__':
             lower = df[method, 'base'] - df[method, 'lower']
             upper = df[method, 'upper'] - df[method, 'base']
             # replace inf
-            upper = np.where(np.isinf(upper), 5e5, upper)
+            big_value = 1e10
+            upper = np.where(np.isinf(upper), big_value, upper)
             print(means, lower, upper, type(upper))
 
             ax.bar(positions, means, width=width, label=methods_label[i], color=colors[i], yerr=[lower, upper], capsize=5, log=True)
