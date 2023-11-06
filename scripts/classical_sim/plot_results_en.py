@@ -15,10 +15,15 @@ from utils.bootstrap_confidence import bootstrap_confidence
 
 from utils.mplsetting import get_custom_rcparams
 
-plt.rcParams.update(get_custom_rcparams())
+rcparams = get_custom_rcparams()
+del rcparams["lines.markeredgewidth"]
+
+plt.rcParams.update(rcparams)
 
 Result = namedtuple('Result', ['mean_eval_success', 'std_eval_success',
-                               'mean_eval_failure', 'std_eval_failure', 'converged_rate', 'mean_eval_to_global', 'lower_eval_total', 'upper_eval_total', 'converged_to_global'])
+                               'mean_eval_failure', 'std_eval_failure',
+                               'converged_rate', 'mean_eval_to_global',
+                               'eval_total', 'converged_to_global'])
 
 color = [hsv_to_rgb((260.0/360.0, 0.5, 0.85)), hsv_to_rgb((120.0 / 360.0, 0.5, 0.7)), hsv_to_rgb((37.0/360.0, 0.93, 0.95))]
 
@@ -68,7 +73,11 @@ def plot_expected_eval(classical_results, quantum_results, funs):
                     x_quiver = errors_i + 2 + 0.05 * method_i
                     ax.annotate('', xytext=(x_quiver, min_interval), xy=(errors_i+2+0.05*method_i, min_interval*10), arrowprops=dict(arrowstyle='->', connectionstyle='arc3', facecolor=color[method_i], edgecolor=color[method_i], lw=1.5, shrinkA=0))
             errorbar = np.abs(np.array(errors).T-np.array(line_y))
-            ax.errorbar(np.array(line_x)+0.05*method_i, line_y, yerr=errorbar, label=method_name[method_i], capsize=5, ecolor=color[method_i], color=color[method_i])
+            ax.errorbar(np.array(line_x)+0.05*method_i, line_y,
+                        yerr=errorbar, label=method_name[method_i], capsize=5,
+                        ecolor=color[method_i], color=color[method_i],
+                        marker='o', linestyle=''
+            )
 
             finite_inds = np.isfinite(line_y)
             finite_line_x = np.array(line_x)[finite_inds]
@@ -84,7 +93,9 @@ def plot_expected_eval(classical_results, quantum_results, funs):
             print(method, finite_line_x, finite_line_y)
             
             # plot regression line
-            ax.plot(regression_line_x + 0.05 * method_i, regression_line_y, linestyle='--', color=color[method_i])
+            ax.plot(regression_line_x + 0.05 * method_i, regression_line_y,
+                    # linestyle='--',
+                    color=color[method_i])
             
             # plot regression line equation and r^2 
             ax.text(regression_line_x[-1] - 1.25, regression_line_y[-1] * 2,
@@ -109,7 +120,9 @@ def plot_expected_eval(classical_results, quantum_results, funs):
                     line_x.append(dim)
                     line_y.append(result.mean_eval_to_global)
 
-            ax.plot(line_x, line_y, linestyle=':', color=color[method_i] * 0.75)
+            ax.plot(line_x, line_y,
+                    linestyle='--',
+                    color=color[method_i] * 0.75)
 
         ax.set_ylim(1, 1000000)
         ax.set_yscale("log")
