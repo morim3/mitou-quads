@@ -18,7 +18,7 @@ from utils.mplsetting import get_custom_rcparams
 plt.rcParams.update(get_custom_rcparams())
 
 Result = namedtuple('Result', ['mean_eval_success', 'std_eval_success',
-                               'mean_eval_failure', 'std_eval_failure', 'converged_rate', 'mean_eval_to_global', 'eval_total', 'converged_to_global'])
+                               'mean_eval_failure', 'std_eval_failure', 'converged_rate', 'mean_eval_to_global', 'lower_eval_total', 'upper_eval_total', 'converged_to_global'])
 
 color = [hsv_to_rgb((260.0/360.0, 0.5, 0.85)), hsv_to_rgb((120.0 / 360.0, 0.5, 0.7)), hsv_to_rgb((37.0/360.0, 0.93, 0.95))]
 
@@ -33,7 +33,7 @@ def get_mean_eval_to_global(evals, is_converged):
     if p == 0:
         return np.inf
     if p != 1:
-        return min(suc, fail) + fail * (1-p) / p
+        return suc + fail * (1-p) / p
     else:
         return suc
 
@@ -120,48 +120,54 @@ def plot_expected_eval(classical_results, quantum_results, funs):
         fig.savefig(f"outputs/expected_eval_{fun}.pdf")
 
 
-def plot_evals(results: List[Result], funs):
-    for fun in funs:
-        fig, ax = plt.subplots(1, 3, figsize=(11, 3.5))
-        for i, method in enumerate(["quads", "grover", "cmaes"]):
-            eval_sums_list = []
-            rate_list = []
-            dims = []
-            for dim in range(2, 13):
-                suggest_name = method+"_"+fun+"_"+str(dim)
-                if suggest_name in results:
-                    dims.append(dim)
-                    result = results[suggest_name]
-                    eval_sums_list.append(result.eval_total)
-                    rate_list.append(result.converged_rate)
+# def plot_evals(results: List[Result], funs):
+#     for fun in funs:
+#         fig, ax = plt.subplots(1, 3, figsize=(11, 3.5))
+#         for i, method in enumerate(["quads", "grover", "cmaes"]):
+#             eval_sums_list = []
+#             rate_list = []
+#             dims = []
+#             for dim in range(2, 13):
+#                 suggest_name = method+"_"+fun+"_"+str(dim)
+#                 if suggest_name in results:
+#                     dims.append(dim)
+#                     result = results[suggest_name]
+#                     eval_sums_list.append(result.eval_total)
+#                     rate_list.append(result.converged_rate)
+#
+#             ax[i].boxplot(eval_sums_list, positions=dims, whis=[0., 100.])
+#             ax[i].set_yscale('log')
+#             ax[i].set_xlim(1, 11)
+#             ax[i].set_ylim(1, 1000000)
+#             ax_twin = ax[i].twinx()
+#             ax_twin.plot(dims, rate_list)
+#             ax_twin.set_ylim(0, 1.01)
+#
+#         ax_twin.set_ylabel("convergence rate")
+#         ax[0].set_title("proposed")
+#         ax[0].set_xlabel("dimension")
+#         ax[0].set_ylabel("oracle eval count")
+#         ax[1].set_title("grover adaptive")
+#         ax[1].set_xlabel("dimension")
+#         ax[2].set_title("cmaes")
+#         ax[2].set_xlabel("dimension")
+#         # ax_twin.set_ylabel("収束割合")
+#         # ax[0].set_title("QuADS")
+#         # ax[0].set_xlabel("次元")
+#         # ax[0].set_ylabel("関数評価回数")
+#         # ax[1].set_title("グローバー適応探索")
+#         # ax[1].set_xlabel("次元")
+#         # ax[2].set_title("CMA-ES")
+#         # ax[2].set_xlabel("次元")
+#         fig.tight_layout()
+#         fig.savefig(f"outputs/evals_{fun}.pdf")
+#         
 
-            ax[i].boxplot(eval_sums_list, positions=dims, whis=[0., 100.])
-            ax[i].set_yscale('log')
-            ax[i].set_xlim(1, 11)
-            ax[i].set_ylim(1, 1000000)
-            ax_twin = ax[i].twinx()
-            ax_twin.plot(dims, rate_list)
-            ax_twin.set_ylim(0, 1.01)
-
-        # ax_twin.set_ylabel("convergence rate")
-        # ax[0].set_title("proposed")
-        # ax[0].set_xlabel("dimension")
-        # ax[0].set_ylabel("oracle eval count")
-        # ax[1].set_title("grover adaptive")
-        # ax[1].set_xlabel("dimension")
-        # ax[2].set_title("cmaes")
-        # ax[2].set_xlabel("dimension")
-        ax_twin.set_ylabel("収束割合")
-        ax[0].set_title("QuADS")
-        ax[0].set_xlabel("次元")
-        ax[0].set_ylabel("関数評価回数")
-        ax[1].set_title("グローバー適応探索")
-        ax[1].set_xlabel("次元")
-        ax[2].set_title("CMA-ES")
-        ax[2].set_xlabel("次元")
-        fig.tight_layout()
-        fig.savefig(f"outputs/evals_{fun}.pdf")
-        
+def optimal_to_upper_bound(optimal_bound):
+    # optimal_num = pi/2-arcsin(sqrt(p))
+    p = np.sin(np.pi / 2 / (2*optimal_bound+1)) ** 2
+    # upper bound is 1/(2*sqrt(p*(1-p))) * 9/2 when lambda is 6/5
+    return 1 / (2*np.sqrt(p*(1-p))) * 9 / 2
 
 if __name__ == '__main__':
 
@@ -170,6 +176,8 @@ if __name__ == '__main__':
     quantum_results = {}
     runs = api.runs(f"preview-control/mitou-quads-classical2")
     for run in runs:
+        if run.state != "finished":
+            continue
         summary = run.summary
         if "mean_eval_success" not in summary:
             continue
@@ -201,10 +209,35 @@ if __name__ == '__main__':
             summary["eval_total"],
             summary["converged_to_global"]
         )
+        # # we just log lower bound, so recalculate upper bound from lower bound.
+        # if run.config["method"] == "grover" or run.config["method"] == "quads":
+        #     artifact = api.artifact("preview-control/mitou-quads-classical2/" + run.logged_artifacts()[0].name )
+        #     table = artifact.get("optimization process")
+        #     table = np.array(table.data)
+        #     lower_eval_total = []
+        #     upper_eval_total = []
+        #     for i in range(99):
+        #         iteri = table[table[:, 0] == i]
+        #         eval_lower_bound = np.concatenate([[iteri[0, 1]], iteri[1:, 1] - iteri[:-1, 1]])
+        #         if run.config["method"] == "grover":
+        #             upper_bound = optimal_to_upper_bound(eval_lower_bound-1) + 1
+        #         elif run.config["method"] == "quads":
+        #             upper_bound = (optimal_to_upper_bound(eval_lower_bound / run.config["n_samples"] - 1) + 1) * run.config["n_samples"]
+        #
+        #         upper_eval_total.append(np.sum(upper_bound))
+        #
+        #     upper_eval_total = np.array(upper_eval_total)
+        #     print(upper_eval_total)
+        #     print(summary["eval_total"])
+        #
+        # else:
+        #     upper_eval_total = summary["eval_total"]
+        #
+        # results[run.name] = Result(
 
     table = []
 
-    funs = ["schwefel", "styblinski_tang", "rastrigin", ]
+    funs = ["schwefel", "styblinski_tang", "rastrigin", "ackley", "alpine01", "griewank"]
 
     plot_expected_eval(classical_results, quantum_results, funs)
     # plot_evals(results, funs)
