@@ -49,7 +49,7 @@ def wrapper_bootstrap(samples):
 
 def plot_expected_eval(classical_results, quantum_results, funs):
     for fun in funs:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(8, 5))
         method_name = ["GAS", "CMA-ES", "QuADS"]
 
         # classical results
@@ -99,7 +99,9 @@ def plot_expected_eval(classical_results, quantum_results, funs):
             
             # plot regression line equation and r^2 
             ax.text(regression_line_x[-1] - 1.25, regression_line_y[-1] * 2,
-                    '$o_{\\rm total}\\approx' + f'{10**intercept:.2f} \\times {10**slope:.2f}^d$\n' + f'$r^2 = {r_squared:.3f}$',
+                    '$o_{\\rm total}\\approx' + f'{10**intercept:.2f} \\times' +
+                    '10^{' + f'{slope:.2f}' + 'd}$\n' +
+                    f'$r^2 = {r_squared:.3f}$',
                     color=color[method_i] * 0.75,
                     fontsize=20)
         
