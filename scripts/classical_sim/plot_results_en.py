@@ -15,10 +15,21 @@ from utils.bootstrap_confidence import bootstrap_confidence
 
 from utils.mplsetting import get_custom_rcparams
 
-rcparams = get_custom_rcparams()
-del rcparams["lines.markeredgewidth"]
+customrc = {
+    # 'axes.labelsize': 8.8,
+    # 'axes.titlesize': 9.6,
+    'xtick.labelsize': 20,
+    'ytick.labelsize': 20,
+    'legend.fontsize': 15,
+    'font.size': 20,
 
-plt.rcParams.update(rcparams)
+    'font.family': 'Times New Roman',
+    'mathtext.fontset': 'stix',  # Computer Modern
+    'xtick.direction': 'in',
+    'ytick.direction': 'in',
+}
+
+plt.rcParams.update(customrc)
 
 Result = namedtuple('Result', ['mean_eval_success', 'std_eval_success',
                                'mean_eval_failure', 'std_eval_failure',
@@ -49,7 +60,11 @@ def wrapper_bootstrap(samples):
 
 def plot_expected_eval(classical_results, quantum_results, funs):
     for fun in funs:
+<<<<<<< HEAD
         fig, ax = plt.subplots(figsize=(8, 5))
+=======
+        fig, ax = plt.subplots(figsize=(8, 6))
+>>>>>>> bf114f0 (add_plot_configuration)
         method_name = ["GAS", "CMA-ES", "QuADS"]
 
         # classical results
@@ -103,7 +118,7 @@ def plot_expected_eval(classical_results, quantum_results, funs):
                     '10^{' + f'{slope:.2f}' + 'd}$\n' +
                     f'$r^2 = {r_squared:.3f}$',
                     color=color[method_i] * 0.75,
-                    fontsize=20)
+                    fontsize=15)
         
         # quantum results
         for method_i, method in enumerate(["grover", "cmaes", "quads"]):
@@ -128,11 +143,12 @@ def plot_expected_eval(classical_results, quantum_results, funs):
 
         from matplotlib.ticker import MaxNLocator
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.set_xticks(range(1, 11))
         ax.set_ylim(1, 1000000)
         ax.set_yscale("log")
         ax.legend(loc='lower right')
-        ax.set_xlabel("Dimension (dim)")
-        ax.set_ylabel("Oracle call counts")
+        ax.set_xlabel("dimension")
+        ax.set_ylabel("expected oracle call counts\n to global optimum")
         fig.tight_layout()
         fig.savefig(f"outputs/expected_eval_{fun}.pdf")
 
