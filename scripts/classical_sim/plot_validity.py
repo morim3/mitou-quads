@@ -44,7 +44,7 @@ def get_mean_eval_to_global(evals, is_converged):
 
 
 def plot_estimation(classical_results, quantum_results, funs):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8, 6))
     method_name = ["GAS", "CMA-ES", "QuADS"]
     for method_i, method in enumerate(["grover", "cmaes", "quads"]):
         if method == "cmaes":
@@ -77,25 +77,27 @@ def plot_estimation(classical_results, quantum_results, funs):
     ax.plot(estimation_line_x, estimation_line_x * 2,
             # linestyle='--',
             color="black",
-            label=r"$o_{\rm q} = 2 o_{\rm c}$")
+            label=r"$o^{q}_{\rm total} = 2 o^c_{\rm lower}$")
 
-    ax.plot(estimation_line_x, estimation_line_x * 6,
-            linestyle='--',
-            color="grey")
+    # ax.plot(estimation_line_x, estimation_line_x * 6,
+    #         linestyle='--',
+    #         color="grey")
     ax.plot(estimation_line_x, estimation_line_x,
             linestyle='--',
-            color="grey")
+            color="grey",
+            label=r"$o^{q}_{\rm total} = o^{c}_{\rm lower}$")
 
     ax.set_xlim(1, 1e5)
     ax.set_ylim(1, 1e5)
     ax.set_yscale("log")
     ax.set_xscale("log")
     ax.xaxis.set_minor_locator(plt.LogLocator(base=10.0, subs=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), numticks=50))
-    ax.legend(loc='lower right')
-    ax.set_xlabel("Classical estimation")
-    ax.set_ylabel("Quantum simulation")
+    ax.legend(loc="lower right" )
+    ax.set_xlabel(r"$o^{c}_{\rm lower}$")
+    ax.set_ylabel(r"$o^{q}_{\rm total}$")
     fig.tight_layout()
-    fig.savefig(f"outputs/estimation.pdf")
+    fig.savefig(f"outputs/estimation_validity.svg")
+    fig.savefig(f"outputs/estimation_validity.pdf")
 
 if __name__ == '__main__':
 
