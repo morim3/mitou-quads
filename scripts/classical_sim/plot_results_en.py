@@ -60,11 +60,7 @@ def wrapper_bootstrap(samples):
 
 def plot_expected_eval(classical_results, quantum_results, funs):
     for fun in funs:
-<<<<<<< HEAD
-        fig, ax = plt.subplots(figsize=(8, 5))
-=======
         fig, ax = plt.subplots(figsize=(8, 6))
->>>>>>> bf114f0 (add_plot_configuration)
         method_name = ["GAS", "CMA-ES", "QuADS"]
 
         # classical results
@@ -83,6 +79,8 @@ def plot_expected_eval(classical_results, quantum_results, funs):
                     line_x.append(dim)
                     line_y.append(result.mean_eval_to_global)
 
+            c = color[method_i] if method == "cmaes" else color[method_i] * 0.75
+
             for errors_i, (min_interval, max_interval) in enumerate(errors):
                 if max_interval == np.inf:
                     x_quiver = errors_i + 2 + 0.05 * method_i
@@ -90,7 +88,7 @@ def plot_expected_eval(classical_results, quantum_results, funs):
             errorbar = np.abs(np.array(errors).T-np.array(line_y))
             ax.errorbar(np.array(line_x)+0.05*method_i, line_y,
                         yerr=errorbar, label=method_name[method_i], capsize=5,
-                        ecolor=color[method_i], color=color[method_i],
+                        ecolor=color[method_i], color=c,
                         marker='o', linestyle=''
             )
 
@@ -110,14 +108,14 @@ def plot_expected_eval(classical_results, quantum_results, funs):
             # plot regression line
             ax.plot(regression_line_x + 0.05 * method_i, regression_line_y,
                     # linestyle='--',
-                    color=color[method_i])
+                    color=c)
             
             # plot regression line equation and r^2 
             ax.text(regression_line_x[-1] - 1.25, regression_line_y[-1] * 2,
                     '$o_{\\rm total}\\approx' + f'{10**intercept:.2f} \\times' +
                     '10^{' + f'{slope:.2f}' + 'd}$\n' +
                     f'$r^2 = {r_squared:.3f}$',
-                    color=color[method_i] * 0.75,
+                    color=c,
                     fontsize=15)
         
         # quantum results
@@ -139,7 +137,7 @@ def plot_expected_eval(classical_results, quantum_results, funs):
 
             ax.plot(line_x, line_y,
                     linestyle='--',
-                    color=color[method_i] * 0.75)
+                    color=color[method_i])
 
         from matplotlib.ticker import MaxNLocator
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
