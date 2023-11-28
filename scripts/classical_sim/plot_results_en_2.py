@@ -77,7 +77,10 @@ def plot_expected_eval(classical_results, quantum_results, funs):
                     #
                     # errors.append(conf_interval)
                     line_x.append(dim)
-                    line_y.append(result.mean_eval_to_global * 2)
+                    if method == "cmaes":
+                        line_y.append(result.mean_eval_to_global)
+                    else:
+                        line_y.append(result.mean_eval_to_global * 2)
 
             # for errors_i, (min_interval, max_interval) in enumerate(errors):
             #     if max_interval == np.inf:
