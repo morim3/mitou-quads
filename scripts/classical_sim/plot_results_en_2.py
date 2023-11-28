@@ -112,11 +112,17 @@ def plot_expected_eval(classical_results, quantum_results, funs):
                     # linestyle='--',
                     color=color[method_i])
             
-            # plot regression line equation and r^2 
-            ax.text(regression_line_x[-3] - 2.25, regression_line_y[-3] * 1.5 ,
-                    '$o_{\\rm total}^c\\approx' + f'{10**intercept:.2f} \\times 10^{{{slope:.2f}d}}$\n' + f'$r^2 = {r_squared:.3f}$',
-                    color=color[method_i],
-                    fontsize=15)
+            if method == "cmaes":
+                ax.text(regression_line_x[-3] - 2.25, regression_line_y[-3] * 1.5 ,
+                        '$o_{\\rm total}\\approx' + f'{10**intercept:.2f} \\times 10^{{{slope:.2f}d}}$\n' + f'$r^2 = {r_squared:.3f}$',
+                        color=color[method_i],
+                        fontsize=15)
+
+            else:
+                ax.text(regression_line_x[-3] - 2.25, regression_line_y[-3] * 1.5 ,
+                        '$\\tilde o_{\\rm total}\\approx' + f'{10**intercept:.2f} \\times 10^{{{slope:.2f}d}}$\n' + f'$r^2 = {r_squared:.3f}$',
+                        color=color[method_i],
+                        fontsize=15)
         
         # quantum results
         for method_i, method in enumerate(["grover", "cmaes", "quads"]):
