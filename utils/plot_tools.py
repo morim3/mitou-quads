@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 
 def plot_function_surface(func, target=None, func_name="", ax=None):

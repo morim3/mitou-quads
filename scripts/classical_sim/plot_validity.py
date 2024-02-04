@@ -77,7 +77,7 @@ def plot_estimation(classical_results, quantum_results, funs):
     ax.plot(estimation_line_x, estimation_line_x * 2,
             # linestyle='--',
             color="black",
-            label=r"$o^{q}_{\rm total} = 2 o^c_{\rm lower}$")
+            label=r"$o_{\rm total} = 2 \tilde o_{\rm lower}$")
 
     # ax.plot(estimation_line_x, estimation_line_x * 6,
     #         linestyle='--',
@@ -85,7 +85,7 @@ def plot_estimation(classical_results, quantum_results, funs):
     ax.plot(estimation_line_x, estimation_line_x,
             linestyle='--',
             color="grey",
-            label=r"$o^{q}_{\rm total} = o^{c}_{\rm lower}$")
+            label=r"$o_{\rm total} = \tilde o_{\rm lower}$")
 
     ax.set_xlim(1, 1e5)
     ax.set_ylim(1, 1e5)
@@ -93,8 +93,8 @@ def plot_estimation(classical_results, quantum_results, funs):
     ax.set_xscale("log")
     ax.xaxis.set_minor_locator(plt.LogLocator(base=10.0, subs=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9), numticks=50))
     ax.legend(loc="lower right" )
-    ax.set_xlabel(r"$o^{c}_{\rm lower}$")
-    ax.set_ylabel(r"$o^{q}_{\rm total}$")
+    ax.set_xlabel(r"$\tilde o_{\rm lower}$")
+    ax.set_ylabel(r"$o_{\rm total}$")
     fig.tight_layout()
     fig.savefig(f"outputs/estimation_validity.svg")
     fig.savefig(f"outputs/estimation_validity.pdf")
