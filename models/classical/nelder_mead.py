@@ -13,7 +13,7 @@ def run_nelder_mead(func, config, verbose=False, return_samples=False):
 
     # cma_param = init_param
     eval_num_hist = []
-    param_hist = []
+    param_hist = [x_init]
     func_hist = []
     min_func_hist = []
     dist_target_hist = []
