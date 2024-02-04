@@ -6,7 +6,7 @@ import joblib
 import wandb
 from models.amp_sim import quads, grover_adaptive
 from models.etc import gradients
-from models.classical import cmaes
+from models.classical import cmaes, nelder_mead
 from models.parameters import QuadsParam, CMAParam
 # from utils.objective_functions import objective_functions
 from utils.plot_tools import plot_function_surface
@@ -103,6 +103,8 @@ def run_trials(func, config):
         method = quads.run_quads
     elif args.method == "adam":
         method = gradients.run_adam
+    elif args.method == "nelder_mead":
+        method = nelder_mead.run_nelder_mead
     
     def run_trial(func, method, config):
         init_mean = np.random.rand(config["n_dim"])
@@ -158,6 +160,9 @@ def main(args):
             "beta1": 0.9,
             "beta2": 0.999
         })
+    elif args.method == "nelder_mead":
+        n_samples = None
+    
     
     config.update(vars(args))
 
@@ -199,7 +204,7 @@ def parse_args(parser):
     parser.add_argument("--entity", default=None)
     parser.add_argument("--func", default="rastrigin", help="test function to optimize")
     parser.add_argument("--n_dim", default=3, type=int, help="number of dimension")
-    parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads", "adam"], help="method used in optimization")
+    parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads", "adam", "nelder_mead"], help="method used in optimization")
     parser.add_argument("--sampler_type", default="quantum", choices=["quantum", "classical"],
                         help="type of sampler (quantum: sample by quantum simulator, classical: sample by classical algorithm)")
     parser.add_argument("--n_digits", default=8, type=int,
