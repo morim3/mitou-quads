@@ -68,13 +68,29 @@ def plot_estimation(classical_results, quantum_results, funs):
                     q_line_x.append(dim)
                     q_line_y.append(result.mean_eval_to_global)
 
+
+        print(line_y)
+        print(q_line_y)
+        line_y_np = np.array(line_y)
+        q_line_y_np = np.array(q_line_y)
+        # drop inf
+        inf_error = np.logical_or(np.isinf(line_y_np), np.isinf(q_line_y_np))
+        line_y_np = line_y_np[np.logical_not(inf_error)]
+        q_line_y_np = q_line_y_np[np.logical_not(inf_error)]
+        slope, intercept, r_value, p_value, std_err = linregress(line_y_np, q_line_y_np)
+        print(f"y = {slope}x + {intercept}, r^2 = {r_value**2}")
+
         ax.scatter(line_y, q_line_y,
                 color=color[method_i] * 0.75, label=method_name[method_i])
         
+
     estimation_line_x = np.array([1, 10, 100, 1e3, 1e4, 1e5])
     
+
+    # linear regression of line_x, line_y
+
     # plot 
-    ax.plot(estimation_line_x, estimation_line_x * 2,
+    ax.plot(estimation_line_x, estimation_line_x * 2.33,
             # linestyle='--',
             color="black",
             label=r"$o_{\rm total} = 2 \tilde o_{\rm lower}$")
