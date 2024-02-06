@@ -3,15 +3,12 @@ import numpy as np
 from scipy.optimize import minimize, OptimizeResult
 
 from scipy.optimize._optimize import _minimize_neldermead
+from scipy.optimize import differential_evolution, basinhopping
 
-def run_nelder_mead(func, config, verbose=False, return_samples=False):
+def run_scipy_optimizer(func, config, optimizer="differential_evolution", verbose=False, return_samples=False):
 
     x_init = config["init_mean"]
 
-    # n_elite = int(np.floor(config["n_samples"] / 2))
-    # hp = CMAHyperParam(config["n_dim"], n_elite, )
-
-    # cma_param = init_param
     eval_num_hist = []
     param_hist = [x_init]
     func_hist = []
@@ -49,10 +46,19 @@ f: {func_hist[-1]}
     
     wrapped_func = lambda x: func_callback(x, func(x))
 
-    x_final = minimize(wrapped_func, x_init,
-                       method="Nelder-Mead",
-                       options={"maxiter": config["max_iter"]},
-                       callback=iter_callback)
+
+    if optimizer == "differential_evolution":
+        callback = lambda xk, convergence: iter_callback(xk)
+        x_final = differential_evolution(wrapped_func, bounds=[(0, 1)] * config["n_dim"],
+                       maxiter=config["max_iter"],
+                       callback=callback)
+
+    else:
+        x_final = minimize(wrapped_func, x_init,
+                           method="Nelder-Mead",
+                           options={"maxiter": config["max_iter"]},
+                           callback=iter_callback)
+
 
     return x_final, (np.array(min_func_hist), np.array(eval_num_hist), np.array(dist_target_hist), param_hist)
 
@@ -76,7 +82,7 @@ if __name__ == "__main__":
         return (20 + np.sum(
             100 * (x - target[None, :]) ** 2, axis=-1)) / 40
 
-    result_param, (min_func_hist, eval_num_hist, dist_target_hist, param_hist) = run_nelder_mead(
-        func, config, verbose=True)
+    result_param, (min_func_hist, eval_num_hist, dist_target_hist, param_hist) = run_scipy_optimizer(
+        func, config, verbose=True, optimizer="basinhopping")
     
     print(result_param, min_func_hist, eval_num_hist, dist_target_hist)
