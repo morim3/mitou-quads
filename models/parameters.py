@@ -109,7 +109,6 @@ def update_cma_params(accepted, accepted_val, gen, param: CMAParam, hp: CMAHyper
 
     step_path = (1-hp.c_sigma) * param.step_path + \
         np.sqrt(hp.c_sigma*(2-hp.c_sigma)*hp.mu_eff) * C_ @ y
-    print(step_path)
     step_size = param.step_size * np.exp(hp.c_sigma/hp.d_sigma * (
         np.linalg.norm(step_path) / E_normal - 1))
 
