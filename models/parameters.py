@@ -11,7 +11,6 @@ class CMAParam:
     step_size: float
     cov_path: Optional[np.ndarray] = None
     step_path: Optional[np.ndarray] = None
-    th_path: float = 0.6
 
     def __post_init__(self):
         if self.step_path is None:
