@@ -11,8 +11,18 @@ def plot_function_surface(func, target=None, func_name="", ax=None):
     if ax is None:
         fig, ax = plt.subplots(dpi=100)
     # ax.imshow(func_value)
-    ax.imshow(func_value)
-    ax.scatter([target[0]*grid_num], [target[1]*grid_num], marker='*', s=10, c="red")
+    im = ax.imshow(func_value, cmap="viridis", extent=[0, 1, 0, 1], origin="lower")
+    ax.scatter([target[0]*grid_num], [target[1]*grid_num], marker='x', s=10, c="red")
+
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+
+    ax.set_xlabel("Variable 1")
+    ax.set_ylabel("Variable 2")
+
+    cbar_func = fig.colorbar(im)
+    cbar_func.set_label('Function Value')
+
     return fig
 
 def plot_optimization_dynamics(eval_hists, min_func_hists, ax=None):
