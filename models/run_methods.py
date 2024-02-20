@@ -6,12 +6,13 @@ import joblib
 import wandb
 from models.amp_sim import quads, grover_adaptive
 from models.etc import gradients
-from models.classical import cmaes, nelder_mead
+from models.classical import cmaes, scipy_optimizers, pso
 from models.parameters import QuadsParam, CMAParam
 # from utils.objective_functions import objective_functions
 from utils.plot_tools import plot_function_surface
 from typing import Callable
 import os
+from functools import partial
 
 def get_sample_size(dim):
     return int(4+np.log(dim)*3)
@@ -59,7 +60,7 @@ def results_postprocess(result, config):
     return result
 
 
-def wandb_log(result):
+def wandb_log(result, method):
 
     # for trial in range(len(eval_hists)):
     #     wandb.log({
@@ -71,9 +72,10 @@ def wandb_log(result):
     eval_hists = result["eval_hists"]
     min_func_hists = result["min_func_hists"]
 
-    opt_process = [[i, x, y] for i in range(len(eval_hists)) for (x, y) in zip(eval_hists[i], min_func_hists[i]) ]
-    table = wandb.Table(data=opt_process, columns = ["trial", "x", "y"])
-    wandb.log({"optimization process" : table})
+    if method != "pso":
+        opt_process = [[i, x, y] for i in range(len(eval_hists)) for (x, y) in zip(eval_hists[i], min_func_hists[i]) ]
+        table = wandb.Table(data=opt_process, columns = ["trial", "x", "y"])
+        wandb.log({"optimization process" : table})
 
 
     wandb.log({
@@ -104,8 +106,17 @@ def run_trials(func, config):
     elif args.method == "adam":
         method = gradients.run_adam
     elif args.method == "nelder_mead":
-        method = nelder_mead.run_nelder_mead
-    
+        method = partial(scipy_optimizers.run_scipy_optimizer, optimizer="nelder_mead")
+    elif args.method == "differential_evolution":
+        method = partial(scipy_optimizers.run_scipy_optimizer, optimizer="differential_evolution")
+    elif args.method == "dual_annealing":
+        method = partial(scipy_optimizers.run_scipy_optimizer, optimizer="dual_annealing")
+    elif args.method == "lbfgs":
+        method = partial(scipy_optimizers.run_scipy_optimizer, optimizer="lbfgs")
+    elif args.method == "pso":
+        method = pso.run_particle_swarm_optimization
+    elif args.method == "basinhopping":
+        method = partial(scipy_optimizers.run_scipy_optimizer, optimizer="basinhopping")
     def run_trial(func, method, config):
         init_mean = np.random.rand(config["n_dim"])
         init_threshold = func(init_mean)
@@ -150,17 +161,25 @@ def main(args):
     if args.method == "grover":
         n_samples = None
     elif args.method == "cmaes":
-        n_samples = get_sample_size(n_dim)
+        if args.n_samples != -1:
+            n_samples = args.n_samples
+        else:
+            n_samples = get_sample_size(n_dim)
     elif args.method == "quads":
         # good sample in cmaes is half better samples
-        n_samples = int(get_sample_size(n_dim) / 2 + 1)
+        if args.n_samples != -1:
+            n_samples = args.n_samples
+        else:
+            n_samples = int(get_sample_size(n_dim) / 2 + 1)
     elif args.method == "adam":
         n_samples = None
         config.update({
             "beta1": 0.9,
             "beta2": 0.999
         })
-    elif args.method == "nelder_mead":
+    elif args.method == "pso":
+        n_samples = args.n_samples
+    else:
         n_samples = None
     
     
@@ -188,7 +207,7 @@ def main(args):
         print("start trials")
         result = run_trials(func, config)
         result = results_postprocess(result, config)
-        wandb_log(result)
+        wandb_log(result, args.method)
 
         save_path = os.path.join(wandb.run.dir, "result.pickle")
         with open(save_path, mode='wb') as f:
@@ -204,7 +223,7 @@ def parse_args(parser):
     parser.add_argument("--entity", default=None)
     parser.add_argument("--func", default="rastrigin", help="test function to optimize")
     parser.add_argument("--n_dim", default=3, type=int, help="number of dimension")
-    parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads", "adam", "nelder_mead"], help="method used in optimization")
+    parser.add_argument("--method", default="quads", choices=["grover", "cmaes", "quads", "adam", "nelder_mead", "differential_evolution", "dual_annealing", "lbfgs", "pso", "basinhopping"], help="method used in optimization")
     parser.add_argument("--sampler_type", default="quantum", choices=["quantum", "classical"],
                         help="type of sampler (quantum: sample by quantum simulator, classical: sample by classical algorithm)")
     parser.add_argument("--n_digits", default=8, type=int,
@@ -224,6 +243,13 @@ def parse_args(parser):
     parser.add_argument("--eval_limit_per_update", default=10000, type=int)
     parser.add_argument('--init_normal_std', type=np.float32, default=1)
     parser.add_argument('--init_step_size', type=np.float32, default=0.5)
+    parser.add_argument('--n_samples', type=int, default=-1)
+    # for pso
+    parser.add_argument('--c1', type=np.float32, default=0.5)
+    parser.add_argument('--c2', type=np.float32, default=0.3)
+    parser.add_argument('--w', type=np.float32, default=0.9)
+    parser.add_argument('--f_tol_rel', type=np.float32, default=1e-4)
+    parser.add_argument('--tol_iter', type=int, default=50)
     return parser
 
 if __name__ == "__main__":
