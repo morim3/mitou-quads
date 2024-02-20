@@ -167,6 +167,17 @@ def wavy(dim=3, target=None, use_jax=False):
 
     return fun, target
 
+def needle_in_haystack(dim=3, target=None, use_jax=False):
+    np = importlib.import_module('jax.numpy' if use_jax else 'numpy')
+    target = np.ones(dim, dtype=np.float32) * 0.5
+
+    # f(x) = 1 when ||x - target|| < 0.01, 0 otherwise
+    def fun(x):
+        return np.where(np.sqrt(np.sum((x - target[None])**2, axis=-1)) < 0.01, 0, 1)
+
+    return fun, target
+
+
 objective_functions = {
     "rastrigin": get_rastrigin,
     "ackley": get_ackley,
@@ -184,4 +195,5 @@ objective_functions = {
     "mishra": mishra,
     "deflectedCorrugatedSpring": deflectedCorrugatedSpring,
     "wavy": wavy,
+    "needle_in_haystack": needle_in_haystack
 }
